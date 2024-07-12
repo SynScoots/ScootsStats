@@ -1,0 +1,7 @@
+## Interface: 30305
+## X-Compatible-With: 40000
+## Title: ScootsStats
+## Notes: Adds a frame to the side of the character panel with all stats displayed at once
+## Author: Scoots
+
+ScootsStats.lua
