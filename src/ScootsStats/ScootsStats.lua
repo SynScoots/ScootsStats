@@ -393,23 +393,18 @@ function ScootsStats_deriveRGB(progress)
 	local lowerRGB = {}
 	local upperRGB = {}
 	
-	print('---------------')
-	print(progress)
 	if(progress < 50) then
 		progress = progress * 2
 		lowerRGB = colours['0']
 		upperRGB = colours['50']
-		print(progress)
 	else
 		progress = (progress - 50) * 2
 		lowerRGB = colours['50']
 		upperRGB = colours['100']
-		print(progress)
 	end
 	
 	local out = {}
 	progress = progress / 100
-	print(progress)
 	
 	for _, key in ipairs({'r', 'g', 'b'}) do
 		if(lowerRGB[key] == upperRGB[key]) then
