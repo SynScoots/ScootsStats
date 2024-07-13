@@ -319,14 +319,13 @@ function ScootsStats_setAttune(statFrame)
 		local slotId = GetInventorySlotInfo(slots[i])
 		local itemLink = GetInventoryItemLink("player", slotId)
 		local itemId = GetInventoryItemID("player", slotId)
-		if(itemLink == nil or not CanAttuneItemHelper(itemId)) then
+		if(itemLink == nil or CanAttuneItemHelper(itemId) < 1) then
 			attuneData[slots[i]] = nil
 		else
 			local attuneProgress = tonumber(GetItemLinkAttuneProgress(itemLink))
 			attuneData[slots[i]] = attuneProgress
 			
 			if(attuneProgress < 100) then
-			
 				attuneCount = attuneCount + 1
 				attuneSum = attuneSum + attuneData[slots[i]]
 			end
@@ -343,35 +342,35 @@ function ScootsStats_setAttune(statFrame)
 		end
 	else
 		PaperDollFrame_SetLabelAndText(statFrame, "Attuning", string.format("%d", attuneCount) .. " items (" .. string.format("%d", attuneSum / attuneCount) .. "%)")
+	end
 	
-		for i = 1, table.getn(slots) do
-			if(attuneData[slots[i]] == nil) then
-				if(attuneFrames[slots[i]] ~= nil) then
-					attuneFrames[slots[i]]:Hide()
-				end
-			else
-				if(attuneFrames[slots[i]] == nil) then
-					attuneFrames[slots[i]] = CreateFrame('Frame', 'Character' .. slots[i] .. '_AttuneProgress', _G['Character' .. slots[i]])
-					
-					attuneFrames[slots[i]]:SetPoint('TOPLEFT', _G['Character' .. slots[i]], 'TOPLEFT', 0, 0)
-					attuneFrames[slots[i]]:SetFrameStrata('MEDIUM')
-					attuneFrames[slots[i]]:SetWidth(_G['Character' .. slots[i]]:GetWidth())
-					attuneFrames[slots[i]]:SetHeight(14)
-					
-					attuneFrames[slots[i]].text = attuneFrames[slots[i]]:CreateFontString(nil, 'ARTWORK')
-					attuneFrames[slots[i]].text:SetFont('Fonts\\FRIZQT__.TTF', 10, 'THINOUTLINE')
-					attuneFrames[slots[i]].text:SetPoint('TOPLEFT', 0, -2)
-					attuneFrames[slots[i]].text:SetJustifyH('LEFT')
-					attuneFrames[slots[i]].text:SetShadowOffset(0, 0)
-					attuneFrames[slots[i]].text:SetShadowColor(0, 0, 0, 1)
-				end
-				
-				local r, g, b = ScootsStats_deriveRGB(attuneData[slots[i]])
-				
-				attuneFrames[slots[i]].text:SetTextColor(r, g, b)
-				attuneFrames[slots[i]].text:SetText(string.format('%d', attuneData[slots[i]]) .. '%')
-				attuneFrames[slots[i]]:Show()
+	for i = 1, table.getn(slots) do
+		if(attuneData[slots[i]] == nil) then
+			if(attuneFrames[slots[i]] ~= nil) then
+				attuneFrames[slots[i]]:Hide()
 			end
+		else
+			if(attuneFrames[slots[i]] == nil) then
+				attuneFrames[slots[i]] = CreateFrame('Frame', 'Character' .. slots[i] .. '_AttuneProgress', _G['Character' .. slots[i]])
+				
+				attuneFrames[slots[i]]:SetPoint('TOPLEFT', _G['Character' .. slots[i]], 'TOPLEFT', 0, 0)
+				attuneFrames[slots[i]]:SetFrameStrata('MEDIUM')
+				attuneFrames[slots[i]]:SetWidth(_G['Character' .. slots[i]]:GetWidth())
+				attuneFrames[slots[i]]:SetHeight(14)
+				
+				attuneFrames[slots[i]].text = attuneFrames[slots[i]]:CreateFontString(nil, 'ARTWORK')
+				attuneFrames[slots[i]].text:SetFont('Fonts\\FRIZQT__.TTF', 10, 'THINOUTLINE')
+				attuneFrames[slots[i]].text:SetPoint('TOPLEFT', 0, -2)
+				attuneFrames[slots[i]].text:SetJustifyH('LEFT')
+				attuneFrames[slots[i]].text:SetShadowOffset(0, 0)
+				attuneFrames[slots[i]].text:SetShadowColor(0, 0, 0, 1)
+			end
+			
+			local r, g, b = ScootsStats_deriveRGB(attuneData[slots[i]])
+			
+			attuneFrames[slots[i]].text:SetTextColor(r, g, b)
+			attuneFrames[slots[i]].text:SetText(string.format('%d', attuneData[slots[i]]) .. '%')
+			attuneFrames[slots[i]]:Show()
 		end
 	end
 end
@@ -461,7 +460,7 @@ function ScootsStats_Attune_OnEnter(self)
 	for i = 1, table.getn(slots) do
 		local value = "-"
 		
-		if(attuneData[slots[i]] ~= nil) then
+		if(attuneData[slots[i]] ~= nil and attuneData[slots[i]] < 100) then
 			value = string.format("%d", attuneData[slots[i]]) .. "%"
 		end
 	
