@@ -412,7 +412,7 @@ function ScootsStats_deriveRGB(progress)
 		elseif(lowerRGB[key] < upperRGB[key]) then
 			out[key] = lowerRGB[key] + ((upperRGB[key] - lowerRGB[key]) * progress)
 		else
-			out[key] = lowerRGB[key] - ((upperRGB[key] - lowerRGB[key]) * progress)
+			out[key] = lowerRGB[key] - ((lowerRGB[key] - upperRGB[key]) * progress)
 		end
 	end
 	
