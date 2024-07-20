@@ -539,6 +539,18 @@ function ScootsStats_UpdateStats()
 	end
 end
 
+function ScootsStats_SetFrameLevels()
+	local baseFrameLevel = CharacterFrame:GetFrameLevel()
+
+	if(attuneFrames ~= nil) then
+		for i = 1, table.getn(attuneFrames) do
+			if(attuneFrames[i] ~= nil) then
+				attuneFrames[i]:SetFrameLevel(baseFrameLevel + 3)
+			end
+		end
+	end
+end
+
 function ScootsStats_sFrame_EventHandler()
 	if(CanAttuneItemHelper ~= nil and GetItemLinkAttuneProgress ~= nil) then
 		if(not loaded) then
@@ -559,6 +571,8 @@ sFrame:SetScript("OnUpdate", function()
 	if(loaded) then
 		ScootsStats_SetMovementSpeed(textFrames["DATA_MiscSpd"])
 	end
+	
+	ScootsStats_SetFrameLevels()
 end)
 
 sFrame:RegisterEvent("PLAYER_ENTERING_WORLD")
