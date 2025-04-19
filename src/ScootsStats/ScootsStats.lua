@@ -292,7 +292,7 @@ function ScootsStats_GetItemLevels()
 
 			local item = {}
 			item.type = itemEquipLoc
-			item.level = itemLevel
+			item.level = tonumber(itemLevel)
 			
 			items[slots[i]] = item
 		end
@@ -301,7 +301,7 @@ function ScootsStats_GetItemLevels()
 	for i = 1, slotCount do
 		if(slots[i] ~= "SecondaryHandSlot" or (items["MainHandSlot"] ~= nil and items["MainHandSlot"].type ~= "INVTYPE_2HWEAPON")) then
 			itemCount = itemCount + 1
-			if(items[slots[i]] ~= nil) then
+			if(items[slots[i]] ~= nil and items[slots[i]].level ~= nil) then
 				sumItemLevel = sumItemLevel + items[slots[i]].level
 			end
 		end
@@ -545,7 +545,7 @@ function ScootsStats_SetFrameLevels()
 	if(attuneFrames ~= nil) then
 		for i = 1, table.getn(attuneFrames) do
 			if(attuneFrames[i] ~= nil) then
-				attuneFrames[i]:SetFrameLevel(baseFrameLevel + 3)
+				attuneFrames[i]:SetFrameLevel(baseFrameLevel + 10)
 			end
 		end
 	end
