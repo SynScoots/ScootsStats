@@ -292,7 +292,7 @@ function ScootsStats_GetItemLevels()
 
 			local item = {}
 			item.type = itemEquipLoc
-			item.level = tonumber(itemLevel)
+			item.level = itemLevel
 			
 			items[slots[i]] = item
 		end
