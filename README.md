@@ -6,6 +6,10 @@ This adds a stat panel to the right of your character panel so you don't need to
 
 Download this repository, then extract the `ScootsStats` subdirectory from the `src` directory into your `World of Warcraft/Interface/AddOns` directory.
 
+## Known bugs ##
+
+There is a random close button on the currency tab.
+
 ## Screenshots ##
 
 ![Screenshot of stat panel](./img/v2-stats.png)
