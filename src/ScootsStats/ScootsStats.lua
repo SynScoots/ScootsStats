@@ -7,6 +7,7 @@ SS.frames.event = CreateFrame('Frame', 'ScootsStatsEventFrame', UIParent)
 SS.frames.master = CreateFrame('Frame', 'ScootsStatsMasterFrame', _G['CharacterFrame'])
 SS.queuedUpdate = false
 SS.queuedAttunedUpdate = false
+SS.hookedTabs = false
 
 SS.frames.event:SetScript('OnUpdate', function()
     if(SS.characterFrameOpen == false) then
@@ -35,6 +36,10 @@ SS.frames.event:SetScript('OnUpdate', function()
                 SS.queuedAttunedUpdate = false
             end
         end
+    end
+    
+    if(SS.characterFrameOpen) then
+        SS.applyFixesToOtherFrames()
     end
 end)
 
@@ -113,6 +118,9 @@ SS.init = function()
     
     _G['CharacterFrameCloseButton']:SetPoint('TOPRIGHT', SS.frames.master, 'TOPLEFT', 5, -9)
     
+    _G['GearManagerToggleButton']:ClearAllPoints()
+    _G['GearManagerToggleButton']:SetPoint('TOPLEFT', _G['CharacterFrame'], 'TOPLEFT', 315, -40)
+    
     SS.sectionFrames = {}
     SS.rowFrames = {}
     
@@ -127,6 +135,28 @@ SS.init = function()
         local itemTags = GetItemTagsCustom(itemId)
         if itemTags and bit.band(itemTags, 96) == 64 then
             SS.totalAccountAttunes = SS.totalAccountAttunes + 1
+        end
+    end
+    
+    SS.frames.otherTabHolder = CreateFrame('Frame', 'ScootsStatsSecondaryFrameHolder', _G['CharacterFrame'])
+    SS.frames.otherTabHolder:SetWidth(SS.baseWidth)
+    SS.frames.otherTabHolder:SetHeight(_G['CharacterFrame']:GetHeight())
+    SS.frames.otherTabHolder:SetPoint('TOPLEFT', _G['CharacterFrame'], 'TOPLEFT', 0, 0)
+end
+
+SS.applyFixesToOtherFrames = function()
+    local frames = {
+        'PetPaperDollFrame',
+        'ReputationFrame',
+        'SkillFrame',
+        'TokenFrame'
+    }
+    
+    for _, frameName in pairs(frames) do
+        if(_G[frameName] and _G[frameName]:IsVisible() and SS['moved' .. frameName] == nil) then
+            _G[frameName]:SetParent(SS.frames.otherTabHolder)
+            _G[frameName]:SetAllPoints()
+            SS['moved' .. frameName] = true
         end
     end
 end
@@ -1030,3 +1060,37 @@ SS.frames.event:RegisterEvent('UPDATE_SHAPESHIFT_FORM')
 SS.frames.event:RegisterEvent('PARTY_KILL')
 SS.frames.event:RegisterEvent('QUEST_TURNED_IN')
 SS.frames.event:RegisterEvent('PLAYER_AURAS_CHANGED')
+
+-- https://pastebin.com/A7JScXWk
+function dumpvar(data)
+    -- cache of tables already printed, to avoid infinite recursive loops
+    local tablecache = {}
+    local buffer = ""
+    local padder = "    "
+ 
+    local function _dumpvar(d, depth)
+        local t = type(d)
+        local str = tostring(d)
+        if (t == "table") then
+            if (tablecache[str]) then
+                -- table already dumped before, so we dont
+                -- dump it again, just mention it
+                buffer = buffer.."<"..str..">\n"
+            else
+                tablecache[str] = (tablecache[str] or 0) + 1
+                buffer = buffer.."("..str..") {\n"
+                for k, v in pairs(d) do
+                    buffer = buffer..string.rep(padder, depth+1).."["..k.."] => "
+                    _dumpvar(v, depth+1)
+                end
+                buffer = buffer..string.rep(padder, depth).."}\n"
+            end
+        elseif (t == "number") then
+            buffer = buffer.."("..t..") "..str.."\n"
+        else
+            buffer = buffer.."("..t..") \""..str.."\"\n"
+        end
+    end
+    _dumpvar(data, 0)
+    return buffer
+end
