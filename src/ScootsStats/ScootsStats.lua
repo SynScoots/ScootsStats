@@ -156,6 +156,7 @@ SS.applyFixesToOtherFrames = function()
         if(_G[frameName] and _G[frameName]:IsVisible() and SS['moved' .. frameName] == nil) then
             _G[frameName]:SetParent(SS.frames.otherTabHolder)
             _G[frameName]:SetAllPoints()
+            _G[frameName]:SetFrameLevel(_G['CharacterFrame']:GetFrameLevel() + 5)
             SS['moved' .. frameName] = true
         end
     end
