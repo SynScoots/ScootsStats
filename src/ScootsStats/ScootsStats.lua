@@ -57,7 +57,12 @@ SS.init = function()
 	_G['CharacterAttributesFrame']:Hide()
 	_G['CharacterModelFrame']:SetHeight(305)
     
-    SS.frames.master:SetPoint('TOPRIGHT', _G['CharacterFrame'], 'TOPRIGHT', -33, 0)
+    SS.frames.otherTabHolder = CreateFrame('Frame', 'ScootsStatsSecondaryFrameHolder', _G['CharacterFrame'])
+    SS.frames.otherTabHolder:SetWidth(SS.baseWidth)
+    SS.frames.otherTabHolder:SetHeight(_G['CharacterFrame']:GetHeight())
+    SS.frames.otherTabHolder:SetPoint('TOPLEFT', _G['CharacterFrame'], 'TOPLEFT', 0, 0)
+    
+    SS.frames.master:SetPoint('TOPLEFT', SS.frames.otherTabHolder, 'TOPRIGHT', -35, 0)
     SS.frames.master:SetHeight(439)
     
     SS.frames.scrollFrame = CreateFrame('ScrollFrame', 'ScootsStatsScrollFrame', SS.frames.master, 'UIPanelScrollFrameTemplate')
@@ -116,7 +121,7 @@ SS.init = function()
     _G['CharacterNameFrame']:SetPoint('TOPRIGHT', SS.frames.master, 'TOPLEFT', 33, -19)
     _G['CharacterNameFrame']:SetWidth(SS.baseWidth)
     
-    _G['CharacterFrameCloseButton']:SetPoint('TOPRIGHT', SS.frames.master, 'TOPLEFT', 5, -9)
+    _G['CharacterFrameCloseButton']:SetPoint('TOPRIGHT', SS.frames.otherTabHolder, 'TOPRIGHT', -28, -9)
     
     _G['GearManagerToggleButton']:ClearAllPoints()
     _G['GearManagerToggleButton']:SetPoint('TOPLEFT', _G['CharacterFrame'], 'TOPLEFT', 315, -40)
@@ -137,15 +142,11 @@ SS.init = function()
             SS.totalAccountAttunes = SS.totalAccountAttunes + 1
         end
     end
-    
-    SS.frames.otherTabHolder = CreateFrame('Frame', 'ScootsStatsSecondaryFrameHolder', _G['CharacterFrame'])
-    SS.frames.otherTabHolder:SetWidth(SS.baseWidth)
-    SS.frames.otherTabHolder:SetHeight(_G['CharacterFrame']:GetHeight())
-    SS.frames.otherTabHolder:SetPoint('TOPLEFT', _G['CharacterFrame'], 'TOPLEFT', 0, 0)
 end
 
 SS.applyFixesToOtherFrames = function()
     local frames = {
+        'PaperDollFrame',
         'PetPaperDollFrame',
         'ReputationFrame',
         'SkillFrame',
