@@ -134,24 +134,6 @@ SS.init = function()
         SS.queuedUpdate = true
         return SS.old_cu_uib(type)
     end
-    
-    SS.characterAttunes = 0
-    SS.totalCharacterAttunes = 0
-    SS.totalAccountAttunes = 0
-    for itemId = 1, MAX_ITEMID do
-        local itemTags = GetItemTagsCustom(itemId)
-        if itemTags and bit.band(itemTags, 96) == 64 then
-            SS.totalAccountAttunes = SS.totalAccountAttunes + 1
-            
-            if(CanAttuneItemHelper(itemId) > 0) then
-                SS.totalCharacterAttunes = SS.totalCharacterAttunes + 1
-                
-                if(GetItemAttuneProgress(itemId) >= 100) then
-                    SS.characterAttunes = SS.characterAttunes + 1
-                end
-            end
-        end
-    end
 end
 
 SS.applyFixesToOtherFrames = function()
@@ -205,7 +187,32 @@ SS.setFrameLevels = function()
     end
 end
 
+SS.countAttunes = function()
+    SS.characterAttunes = 0
+    SS.totalCharacterAttunes = 0
+    SS.totalAccountAttunes = 0
+    
+    for itemId = 1, MAX_ITEMID do
+        local itemTags = GetItemTagsCustom(itemId)
+        if itemTags and bit.band(itemTags, 96) == 64 then
+            SS.totalAccountAttunes = SS.totalAccountAttunes + 1
+            
+            if(CanAttuneItemHelper(itemId) > 0) then
+                SS.totalCharacterAttunes = SS.totalCharacterAttunes + 1
+                
+                if(GetItemAttuneProgress(itemId) >= 100) then
+                    SS.characterAttunes = SS.characterAttunes + 1
+                end
+            end
+        end
+    end
+end
+
 SS.updateStats = function()
+    if(SS.queuedAttunedUpdate) then
+        SS.countAttunes()
+    end
+
     for _, frame in pairs(SS.sectionFrames) do
         frame:Hide()
     end
@@ -382,8 +389,7 @@ SS.updateStats = function()
                 {
                     ['display'] = SS.setStatCharacterAttunes,
                     ['onEnter'] = SS.enterCharacterAttunes,
-                    ['option'] = {'prestige', 'charattunes'},
-                    ['attunementOnly'] = true
+                    ['option'] = {'prestige', 'charattunes'}
                 },
                 {
                     ['display'] = SS.setStatForgePower,
@@ -449,7 +455,9 @@ SS.updateStats = function()
                     frameHeight = frameHeight + 15
                 end
                 
+                local newlyCreated = false
                 if(not SS.rowFrames[rowKey]) then
+                    newlyCreated = true
                     SS.rowFrames[rowKey] = CreateFrame('Frame', 'ScootsStatsRow' .. rowKey, SS.frames.scrollChild, 'StatFrameTemplate')
                     SS.rowFrames[rowKey]:SetHeight(10)
                     SS.rowFrames[rowKey]:SetFrameStrata(SS.strata)
@@ -465,7 +473,7 @@ SS.updateStats = function()
                 
                 SS.rowFrames[rowKey]:Show()
                 
-                if(SS.queuedAttunedUpdate or not row.attunementOnly) then
+                if(newlyCreated or SS.queuedAttunedUpdate or not row.attunementOnly) then
                     row.display(SS.rowFrames[rowKey], row.argument)
                 end
                 
@@ -1065,7 +1073,8 @@ function SS.onLogout()
 end
 
 function SS.watchChatForAttunement(message)
-    if(string.find(message, 'You have attuned with ', 1, true)) then
+    if(string.find(message, 'You have attuned with', 1, true)) then
+        print('attuned event')
         SS.queuedUpdate = true
         SS.queuedAttunedUpdate = true
     end
