@@ -11,7 +11,7 @@ SS.hookedTabs = false
 
 SS.frames.event:SetScript('OnUpdate', function()
     if(SS.characterFrameOpen == false) then
-        if(_G['CharacterFrame'] and _G['CharacterFrame']:IsVisible() == 1) then
+        if(_G['CharacterFrame'] and _G['CharacterFrame']:IsVisible() == 1 and CanAttuneItemHelper and GetItemAttuneProgress) then
             SS.characterFrameOpen = true
             SS.queuedUpdate = true
             
@@ -135,11 +135,21 @@ SS.init = function()
         return SS.old_cu_uib(type)
     end
     
+    SS.characterAttunes = 0
+    SS.totalCharacterAttunes = 0
     SS.totalAccountAttunes = 0
     for itemId = 1, MAX_ITEMID do
         local itemTags = GetItemTagsCustom(itemId)
         if itemTags and bit.band(itemTags, 96) == 64 then
             SS.totalAccountAttunes = SS.totalAccountAttunes + 1
+            
+            if(CanAttuneItemHelper(itemId) > 0) then
+                SS.totalCharacterAttunes = SS.totalCharacterAttunes + 1
+                
+                if(GetItemAttuneProgress(itemId) >= 100) then
+                    SS.characterAttunes = SS.characterAttunes + 1
+                end
+            end
         end
     end
 end
@@ -370,6 +380,12 @@ SS.updateStats = function()
             ['title'] = 'Prestige',
             ['rows'] = {
                 {
+                    ['display'] = SS.setStatCharacterAttunes,
+                    ['onEnter'] = SS.enterCharacterAttunes,
+                    ['option'] = {'prestige', 'charattunes'},
+                    ['attunementOnly'] = true
+                },
+                {
                     ['display'] = SS.setStatForgePower,
                     ['onEnter'] = SS.enterForgePower,
                     ['option'] = {'prestige', 'forgepower'},
@@ -569,6 +585,18 @@ SS.enterMovementSpeed = function(frame)
     GameTooltip:SetText('Run Speed', HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b)
     GameTooltip:AddLine('Shows the speed you are currently moving at.', nil, nil, nil, true)
     GameTooltip:Show()
+end
+
+SS.setStatCharacterAttunes = function(frame)
+    PaperDollFrame_SetLabelAndText(frame, 'Char. Attunes', string.format('%.2f', (100 / SS.totalCharacterAttunes) * SS.characterAttunes) .. '%')
+end
+
+SS.enterCharacterAttunes = function(frame)
+    GameTooltip:SetOwner(frame, 'ANCHOR_RIGHT')
+    GameTooltip:SetText('Character Attunes', HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b)
+    GameTooltip:AddLine('This shows your progress towards attuning all items available for your current character.', nil, nil, nil, true)
+    GameTooltip:AddLine(' ')
+    GameTooltip:AddLine(tostring(SS.characterAttunes) .. ' of ' .. tostring(SS.totalCharacterAttunes) .. ' items attuned.', nil, nil, nil, true)
 end
 
 SS.setStatForgePower = function(frame)
@@ -788,6 +816,7 @@ SS.toggleOptionsPanel = function(frame)
                 {
                     ['title'] = 'Prestige',
                     ['rows'] = {
+                        {'Char. Attunes', 'prestige', 'charattunes'},
                         {'Forge Power', 'prestige', 'forgepower'},
                         {'Loot Coercion', 'prestige', 'lootcoercion'},
                         {'Bonus Exp.', 'prestige', 'bonusexp'}
@@ -980,6 +1009,7 @@ function SS.loadOptions()
             ['resilience'] = true
         },
         ['prestige'] = {
+            ['charattunes'] = true,
             ['forgepower'] = true,
             ['lootcoercion'] = true,
             ['bonusexp'] = true
