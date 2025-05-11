@@ -1074,7 +1074,6 @@ end
 
 function SS.watchChatForAttunement(message)
     if(string.find(message, 'You have attuned with', 1, true)) then
-        print('attuned event')
         SS.queuedUpdate = true
         SS.queuedAttunedUpdate = true
     end
