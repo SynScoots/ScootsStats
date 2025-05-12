@@ -10,36 +10,38 @@ SS.queuedAttunedUpdate = false
 SS.hookedTabs = false
 
 SS.frames.event:SetScript('OnUpdate', function()
-    if(SS.characterFrameOpen == false) then
-        if(_G['CharacterFrame'] and _G['CharacterFrame']:IsVisible() == 1 and CanAttuneItemHelper and GetItemAttuneProgress) then
-            SS.characterFrameOpen = true
-            SS.queuedUpdate = true
-            
-            if(not SS.initialised) then
-                SS.init()
-                SS.queuedAttunedUpdate = true
-            end
-        end
-    else
-        if(_G['CharacterFrame'] and _G['CharacterFrame']:IsVisible() ~= 1) then
-            SS.characterFrameOpen = false
-            
-            if(SS.optionsOpen) then
-                SS.toggleOptionsPanel()
+    if(SS.addonLoaded) then
+        if(SS.characterFrameOpen == false) then
+            if(_G['CharacterFrame'] and _G['CharacterFrame']:IsVisible() == 1 and MAX_ITEMID and CanAttuneItemHelper and GetItemAttuneProgress) then
+                SS.characterFrameOpen = true
+                SS.queuedUpdate = true
+                
+                if(not SS.initialised) then
+                    SS.init()
+                    SS.queuedAttunedUpdate = true
+                end
             end
         else
-            if(SS.queuedUpdate == true or SS.queuedAttunedUpdate == true) then
-                SS.updateStats()
-                SS.setFrameLevels()
+            if(_G['CharacterFrame'] and _G['CharacterFrame']:IsVisible() ~= 1) then
+                SS.characterFrameOpen = false
                 
-                SS.queuedUpdate = false
-                SS.queuedAttunedUpdate = false
+                if(SS.optionsOpen) then
+                    SS.toggleOptionsPanel()
+                end
+            else
+                if(SS.queuedUpdate == true or SS.queuedAttunedUpdate == true) then
+                    SS.updateStats()
+                    SS.setFrameLevels()
+                    
+                    SS.queuedUpdate = false
+                    SS.queuedAttunedUpdate = false
+                end
             end
         end
-    end
-    
-    if(SS.characterFrameOpen) then
-        SS.applyFixesToOtherFrames()
+        
+        if(SS.characterFrameOpen) then
+            SS.applyFixesToOtherFrames()
+        end
     end
 end)
 
@@ -1080,7 +1082,9 @@ function SS.watchChatForAttunement(message)
 end
 
 function SS.eventHandler(self, event, arg1)
-    if(event == 'PLAYER_LOGOUT') then
+    if(event == 'ADDON_LOADED' and arg1 == 'ScootsStats') then
+        SS.addonLoaded = true
+    elseif(event == 'PLAYER_LOGOUT') then
         SS.onLogout()
     elseif(event == 'CHAT_MSG_SYSTEM') then
         SS.watchChatForAttunement(arg1)
@@ -1091,6 +1095,7 @@ end
 
 SS.frames.event:SetScript('OnEvent', SS.eventHandler)
 
+SS.frames.event:RegisterEvent('ADDON_LOADED')
 SS.frames.event:RegisterEvent('PLAYER_LOGOUT')
 SS.frames.event:RegisterEvent('CHAT_MSG_SYSTEM')
 SS.frames.event:RegisterEvent('PLAYER_ENTERING_WORLD')
