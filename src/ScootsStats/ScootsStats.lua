@@ -211,6 +211,8 @@ SS.countAttunes = function()
             end
         end
     end
+    
+    SS.accountAttunes, SS.accountAttunesTF, SS.accountAttunesWF, SS.accountAttunesLF = CalculateAttunedCount()
 end
 
 SS.updateStats = function()
@@ -613,11 +615,9 @@ SS.enterCharacterAttunes = function(frame)
 end
 
 SS.setStatForgePower = function(frame)
-    local _, titan, war, light = CalculateAttunedCount()
-    
-    titan = (titan / 100) ^ 0.7
-    war = (war / 15) ^ 0.7
-    light = light ^ 0.7
+    local titan = (SS.accountAttunesTF / 100) ^ 0.7
+    local war = (SS.accountAttunesWF / 15) ^ 0.7
+    local light = SS.accountAttunesLF ^ 0.7
     
     PaperDollFrame_SetLabelAndText(frame, 'Forge Power', string.format('%.2f', titan + war + light) .. '%')
 end
@@ -630,18 +630,16 @@ SS.enterForgePower = function(frame)
     GameTooltip:AddLine('Increased by attuning forged items across your entire account.', nil, nil, nil, true)
     GameTooltip:AddLine(' ')
     
-    local _, titanCount, warCount, lightCount = CalculateAttunedCount()
-    
-    local titanEffect = (titanCount / 100) ^ 0.7
-    local warEffect = (warCount / 15) ^ 0.7
-    local lightEffect = lightCount ^ 0.7
+    local titanEffect = (SS.accountAttunesTF / 100) ^ 0.7
+    local warEffect = (SS.accountAttunesWF / 15) ^ 0.7
+    local lightEffect = SS.accountAttunesLF ^ 0.7
     
     local s = 's'
-    if(titanCount == 1) then
+    if(SS.accountAttunesTF == 1) then
         s = ''
     end
     GameTooltip:AddDoubleLine(
-        titanCount .. ' titanforged item' .. s,
+        SS.accountAttunesTF .. ' titanforged item' .. s,
         string.format('%.2f', titanEffect) .. '%',
         NORMAL_FONT_COLOR.r,
         NORMAL_FONT_COLOR.g,
@@ -652,11 +650,11 @@ SS.enterForgePower = function(frame)
     )
     
     s = 's'
-    if(warCount == 1) then
+    if(SS.accountAttunesWF == 1) then
         s = ''
     end
     GameTooltip:AddDoubleLine(
-        warCount .. ' warforged item' .. s,
+        SS.accountAttunesWF .. ' warforged item' .. s,
         string.format('%.2f', warEffect) .. '%',
         NORMAL_FONT_COLOR.r,
         NORMAL_FONT_COLOR.g,
@@ -667,11 +665,11 @@ SS.enterForgePower = function(frame)
     )
     
     s = 's'
-    if(lightCount == 1) then
+    if(SS.accountAttunesLF == 1) then
         s = ''
     end
     GameTooltip:AddDoubleLine(
-        lightCount .. ' lightforged item' .. s,
+        SS.accountAttunesLF .. ' lightforged item' .. s,
         string.format('%.2f', lightEffect) .. '%',
         NORMAL_FONT_COLOR.r,
         NORMAL_FONT_COLOR.g,
@@ -685,8 +683,7 @@ SS.enterForgePower = function(frame)
 end
 
 SS.setStatLootCoercion = function(frame)
-    local accountAttunes = select(1, CalculateAttunedCount())
-    local effect = (100 / SS.totalAccountAttunes) * accountAttunes
+    local effect = (100 / SS.totalAccountAttunes) * SS.accountAttunes
     
     PaperDollFrame_SetLabelAndText(frame, 'Loot Coercion', string.format('%.2f', effect) .. '%')
 end
@@ -698,7 +695,7 @@ SS.enterLootCoercion = function(frame)
     GameTooltip:AddLine(' ')
     GameTooltip:AddLine('Equal to your total account attunes relative to the total number of attunable items in the game.', nil, nil, nil, true)
     GameTooltip:AddLine(' ')
-    GameTooltip:AddLine(select(1, CalculateAttunedCount()) .. ' of ' .. SS.totalAccountAttunes .. ' items attuned.')
+    GameTooltip:AddLine(SS.accountAttunes .. ' of ' .. SS.totalAccountAttunes .. ' items attuned.')
     GameTooltip:Show()
 end
 
