@@ -161,6 +161,17 @@ SS.applyFixesToOtherFrames = function()
             SS['moved' .. frameName] = true
         end
     end
+    
+    frames = {
+        'ReputationDetailFrame'
+    }
+    
+    for _, frameName in pairs(frames) do
+        if(_G[frameName] and _G[frameName]:IsVisible() and SS['moved' .. frameName] == nil) then
+            _G[frameName]:SetFrameLevel(_G['PaperDollFrame']:GetFrameLevel() + 5)
+            SS['moved' .. frameName] = true
+        end
+    end
 end
 
 SS.setFrameLevels = function()
