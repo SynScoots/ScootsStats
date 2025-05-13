@@ -12,7 +12,14 @@ SS.hookedTabs = false
 SS.frames.event:SetScript('OnUpdate', function()
     if(SS.addonLoaded) then
         if(SS.characterFrameOpen == false) then
-            if(_G['CharacterFrame'] and _G['CharacterFrame']:IsVisible() == 1 and MAX_ITEMID and CanAttuneItemHelper and GetItemAttuneProgress) then
+            if(_G['CharacterFrame']
+            and _G['CharacterFrame']:IsVisible() == 1
+            and MAX_ITEMID
+            and CanAttuneItemHelper
+            and GetItemAttuneProgress
+            and GetCustomGameDataCount
+            and GetCustomGameData
+            and GetItemInfoCustom) then
                 SS.characterFrameOpen = true
                 SS.queuedUpdate = true
                 
@@ -34,7 +41,6 @@ SS.frames.event:SetScript('OnUpdate', function()
                     SS.setFrameLevels()
                     
                     SS.queuedUpdate = false
-                    SS.queuedAttunedUpdate = false
                 end
             end
         end
@@ -193,6 +199,8 @@ SS.countAttunes = function()
     SS.characterAttunes = 0
     SS.totalCharacterAttunes = 0
     SS.totalAccountAttunes = 0
+    SS.highLevelLightForges = 0
+    SS.bonusExpEffect = 0
     
     for itemId = 1, MAX_ITEMID do
         local itemTags = GetItemTagsCustom(itemId)
@@ -209,14 +217,25 @@ SS.countAttunes = function()
         end
     end
     
+    local attunedItemCount = GetCustomGameDataCount(11)
+    for i = 1, attunedItemCount do
+        local itemId = GetCustomGameDataIndex(11, i)
+        
+        if(bit.band(itemId, 0x00FF0000) == 0 and bit.rshift(itemId, 24) == 3 and GetCustomGameData(11, itemId) >= 100) then
+            _, _, _, itemLevel = GetItemInfoCustom(bit.band(itemId, 0xffff))
+            if(itemLevel > 200) then
+                SS.bonusExpEffect = SS.bonusExpEffect + (itemLevel - 200) / 84
+                SS.highLevelLightForges = SS.highLevelLightForges + 1
+            end
+        end
+    end
+    
     SS.accountAttunes, SS.accountAttunesTF, SS.accountAttunesWF, SS.accountAttunesLF = CalculateAttunedCount()
+    
+    SS.queuedAttunedUpdate = false
 end
 
 SS.updateStats = function()
-    if(SS.queuedAttunedUpdate) then
-        SS.countAttunes()
-    end
-
     for _, frame in pairs(SS.sectionFrames) do
         frame:Hide()
     end
@@ -459,9 +478,7 @@ SS.updateStats = function()
                     frameHeight = frameHeight + 15
                 end
                 
-                local newlyCreated = false
                 if(not SS.rowFrames[rowKey]) then
-                    newlyCreated = true
                     SS.rowFrames[rowKey] = CreateFrame('Frame', 'ScootsStatsRow' .. rowKey, SS.frames.scrollChild, 'StatFrameTemplate')
                     SS.rowFrames[rowKey]:SetHeight(10)
                     SS.rowFrames[rowKey]:SetFrameStrata(SS.strata)
@@ -476,10 +493,7 @@ SS.updateStats = function()
                 end
                 
                 SS.rowFrames[rowKey]:Show()
-                
-                if(newlyCreated or SS.queuedAttunedUpdate or not row.attunementOnly) then
-                    row.display(SS.rowFrames[rowKey], row.argument)
-                end
+                row.display(SS.rowFrames[rowKey], row.argument)
                 
                 SS.rowFrames[rowKey]:SetPoint('TOPLEFT', prevFrame, 'BOTTOMLEFT', 0, -1)
                 prevFrame = SS.rowFrames[rowKey]
@@ -600,10 +614,18 @@ SS.enterMovementSpeed = function(frame)
 end
 
 SS.setStatCharacterAttunes = function(frame)
+    if(SS.queuedAttunedUpdate) then
+        SS.countAttunes()
+    end
+    
     PaperDollFrame_SetLabelAndText(frame, 'Char. Attunes', string.format('%.2f', (100 / SS.totalCharacterAttunes) * SS.characterAttunes) .. '%')
 end
 
 SS.enterCharacterAttunes = function(frame)
+    if(SS.queuedAttunedUpdate) then
+        SS.countAttunes()
+    end
+    
     GameTooltip:SetOwner(frame, 'ANCHOR_RIGHT')
     GameTooltip:SetText('Character Attunes', HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b)
     GameTooltip:AddLine('This shows your progress towards attuning all items available for your current character.', nil, nil, nil, true)
@@ -612,6 +634,10 @@ SS.enterCharacterAttunes = function(frame)
 end
 
 SS.setStatForgePower = function(frame)
+    if(SS.queuedAttunedUpdate) then
+        SS.countAttunes()
+    end
+    
     local titan = (SS.accountAttunesTF / 100) ^ 0.7
     local war = (SS.accountAttunesWF / 15) ^ 0.7
     local light = SS.accountAttunesLF ^ 0.7
@@ -620,6 +646,10 @@ SS.setStatForgePower = function(frame)
 end
 
 SS.enterForgePower = function(frame)
+    if(SS.queuedAttunedUpdate) then
+        SS.countAttunes()
+    end
+    
     GameTooltip:SetOwner(frame, 'ANCHOR_RIGHT')
     GameTooltip:SetText('Forge Power', HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b)
     GameTooltip:AddLine('This shows an increased chance to gain forged items after prestige.', nil, nil, nil, true)
@@ -680,12 +710,20 @@ SS.enterForgePower = function(frame)
 end
 
 SS.setStatLootCoercion = function(frame)
+    if(SS.queuedAttunedUpdate) then
+        SS.countAttunes()
+    end
+    
     local effect = (100 / SS.totalAccountAttunes) * SS.accountAttunes
     
     PaperDollFrame_SetLabelAndText(frame, 'Loot Coercion', string.format('%.2f', effect) .. '%')
 end
 
 SS.enterLootCoercion = function(frame)
+    if(SS.queuedAttunedUpdate) then
+        SS.countAttunes()
+    end
+    
     GameTooltip:SetOwner(frame, 'ANCHOR_RIGHT')
     GameTooltip:SetText('Loot Coercion', HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b)
     GameTooltip:AddLine('This shows an increased chance for dropped items to be useful to you after prestige.', nil, nil, nil, true)
@@ -697,28 +735,18 @@ SS.enterLootCoercion = function(frame)
 end
 
 SS.setStatBonusExp = function(frame)
-    local effect = 0
-    SS.highLevelLightForges = 0
-    
-    if(GetCustomGameDataCount and GetCustomGameData and GetItemInfoCustom) then
-        local attunedItemCount = GetCustomGameDataCount(11)
-        for i = 1, attunedItemCount do
-            local itemId = GetCustomGameDataIndex(11, i)
-            
-            if(bit.band(itemId, 0x00FF0000) == 0 and bit.rshift(itemId, 24) == 3 and GetCustomGameData(11, itemId) >= 100) then
-                _, _, _, itemLevel = GetItemInfoCustom(bit.band(itemId, 0xffff))
-                if(itemLevel > 200) then
-                    effect = effect + (itemLevel - 200) / 84
-                    SS.highLevelLightForges = SS.highLevelLightForges + 1
-                end
-            end
-        end
+    if(SS.queuedAttunedUpdate) then
+        SS.countAttunes()
     end
 
-    PaperDollFrame_SetLabelAndText(frame, 'Bonus Exp.', string.format('%.2f', effect) .. '%')
+    PaperDollFrame_SetLabelAndText(frame, 'Bonus Exp.', string.format('%.2f', SS.bonusExpEffect) .. '%')
 end
 
 SS.enterBonusExp = function(frame)
+    if(SS.queuedAttunedUpdate) then
+        SS.countAttunes()
+    end
+    
     GameTooltip:SetOwner(frame, 'ANCHOR_RIGHT')
     GameTooltip:SetText('Bonus Experience', HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b)
     GameTooltip:AddLine('This shows how much extra experience your attuning items will gain after prestige.', nil, nil, nil, true)
