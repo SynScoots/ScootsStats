@@ -136,15 +136,6 @@ SS.init = function()
         SS.queuedUpdate = true
         return SS.old_cu_uib(type)
     end
-    
-    SS.totalAccountAttunes = 0
-    
-    for itemId = 1, MAX_ITEMID do
-        local itemTags = GetItemTagsCustom(itemId)
-        if itemTags and bit.band(itemTags, 96) == 64 then
-            SS.totalAccountAttunes = SS.totalAccountAttunes + 1
-        end
-    end
 end
 
 SS.applyFixesToOtherFrames = function()
@@ -201,13 +192,19 @@ end
 SS.countAttunes = function()
     SS.characterAttunes = 0
     SS.totalCharacterAttunes = 0
+    SS.totalAccountAttunes = 0
     
     for itemId = 1, MAX_ITEMID do
-        if(CanAttuneItemHelper(itemId) > 0) then
-            SS.totalCharacterAttunes = SS.totalCharacterAttunes + 1
+        local itemTags = GetItemTagsCustom(itemId)
+        if itemTags and bit.band(itemTags, 96) == 64 then
+            SS.totalAccountAttunes = SS.totalAccountAttunes + 1
             
-            if(GetItemAttuneProgress(itemId) >= 100) then
-                SS.characterAttunes = SS.characterAttunes + 1
+            if(CanAttuneItemHelper(itemId) > 0) then
+                SS.totalCharacterAttunes = SS.totalCharacterAttunes + 1
+                
+                if(GetItemAttuneProgress(itemId) >= 100) then
+                    SS.characterAttunes = SS.characterAttunes + 1
+                end
             end
         end
     end
