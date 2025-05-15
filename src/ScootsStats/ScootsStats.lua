@@ -16,7 +16,7 @@ SS.frames.event:SetScript('OnUpdate', function()
             and _G['CharacterFrame']:IsVisible() == 1
             and MAX_ITEMID
             and CanAttuneItemHelper
-            and GetItemAttuneProgress
+            and HasAttunedAnyVariantOfItem
             and GetCustomGameDataCount
             and GetCustomGameData
             and GetItemInfoCustom) then
@@ -215,13 +215,13 @@ SS.countAttunes = function()
     
     for itemId = 1, MAX_ITEMID do
         local itemTags = GetItemTagsCustom(itemId)
-        if itemTags and bit.band(itemTags, 96) == 64 then
+        if(itemTags and bit.band(itemTags, 96) == 64) then
             SS.totalAccountAttunes = SS.totalAccountAttunes + 1
             
             if(CanAttuneItemHelper(itemId) > 0) then
                 SS.totalCharacterAttunes = SS.totalCharacterAttunes + 1
                 
-                if(GetItemAttuneProgress(itemId) >= 100) then
+                if(HasAttunedAnyVariantOfItem(itemId)) then
                     SS.characterAttunes = SS.characterAttunes + 1
                 end
             end
