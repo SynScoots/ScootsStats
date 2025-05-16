@@ -11,6 +11,10 @@ SS.hookedTabs = false
 
 SS.frames.event:SetScript('OnUpdate', function()
     if(SS.addonLoaded) then
+        if(CalculateAttunableAffixCount and SS.totalAccountAffixes == nil) then
+            SS.totalAccountAffixes = CalculateAttunableAffixCount()
+        end
+    
         if(SS.characterFrameOpen == false) then
             if(_G['CharacterFrame']
             and _G['CharacterFrame']:IsVisible() == 1
@@ -26,6 +30,7 @@ SS.frames.event:SetScript('OnUpdate', function()
                 if(not SS.initialised) then
                     SS.init()
                     SS.queuedAttunedUpdate = true
+                    SS.queuedLightforgeUpdate = true
                 end
             end
         else
@@ -142,6 +147,23 @@ SS.init = function()
         SS.queuedUpdate = true
         return SS.old_cu_uib(type)
     end
+    
+    SS.totalCharacterAttunes = 0
+    SS.totalAccountAttunes = 0
+    for itemId = 1, MAX_ITEMID do
+        local itemTags = GetItemTagsCustom(itemId)
+        if(itemTags and bit.band(itemTags, 96) == 64) then
+            SS.totalAccountAttunes = SS.totalAccountAttunes + 1
+            
+            if(CanAttuneItemHelper(itemId) > 0) then
+                SS.totalCharacterAttunes = SS.totalCharacterAttunes + 1
+            end
+        end
+    end
+    
+    if(SS.totalAccountAffixes == nil) then
+        SS.totalAccountAffixes = CalculateAttunableAffixCount()
+    end
 end
 
 SS.applyFixesToOtherFrames = function()
@@ -207,43 +229,29 @@ SS.setFrameLevels = function()
 end
 
 SS.countAttunes = function()
-    SS.characterAttunes = 0
-    SS.totalCharacterAttunes = 0
-    SS.totalAccountAttunes = 0
-    SS.highLevelLightForges = 0
-    SS.bonusExpEffect = 0
-    
-    for itemId = 1, MAX_ITEMID do
-        local itemTags = GetItemTagsCustom(itemId)
-        if(itemTags and bit.band(itemTags, 96) == 64) then
-            SS.totalAccountAttunes = SS.totalAccountAttunes + 1
+    if(SS.queuedLightforgeUpdate) then
+        SS.highLevelLightForges = 0
+        SS.bonusExpEffect = 0
+        local attunedItemCount = GetCustomGameDataCount(11)
+        for i = 1, attunedItemCount do
+            local itemId = GetCustomGameDataIndex(11, i)
             
-            if(CanAttuneItemHelper(itemId) > 0) then
-                SS.totalCharacterAttunes = SS.totalCharacterAttunes + 1
-                
-                if(HasAttunedAnyVariantOfItem(itemId)) then
-                    SS.characterAttunes = SS.characterAttunes + 1
+            if(bit.band(itemId, 0x00FF0000) == 0 and bit.rshift(itemId, 24) == 3 and GetCustomGameData(11, itemId) >= 100) then
+                _, _, _, itemLevel = GetItemInfoCustom(bit.band(itemId, 0xffff))
+                if(itemLevel > 200) then
+                    SS.bonusExpEffect = SS.bonusExpEffect + (itemLevel - 200) / 84
+                    SS.highLevelLightForges = SS.highLevelLightForges + 1
                 end
             end
         end
     end
     
-    local attunedItemCount = GetCustomGameDataCount(11)
-    for i = 1, attunedItemCount do
-        local itemId = GetCustomGameDataIndex(11, i)
-        
-        if(bit.band(itemId, 0x00FF0000) == 0 and bit.rshift(itemId, 24) == 3 and GetCustomGameData(11, itemId) >= 100) then
-            _, _, _, itemLevel = GetItemInfoCustom(bit.band(itemId, 0xffff))
-            if(itemLevel > 200) then
-                SS.bonusExpEffect = SS.bonusExpEffect + (itemLevel - 200) / 84
-                SS.highLevelLightForges = SS.highLevelLightForges + 1
-            end
-        end
-    end
-    
+    SS.characterAttunes = CalculateAttunedCount(1)
     SS.accountAttunes, SS.accountAttunesTF, SS.accountAttunesWF, SS.accountAttunesLF = CalculateAttunedCount()
+    SS.attunedAffixes = CalculateAttunedAffixCount()
     
     SS.queuedAttunedUpdate = false
+    SS.queuedLightforgeUpdate = false
 end
 
 SS.updateStats = function()
@@ -435,6 +443,12 @@ SS.updateStats = function()
                     ['display'] = SS.setStatLootCoercion,
                     ['onEnter'] = SS.enterLootCoercion,
                     ['option'] = {'prestige', 'lootcoercion'},
+                    ['attunementOnly'] = true
+                },
+                {
+                    ['display'] = SS.setStatAffixCoercion,
+                    ['onEnter'] = SS.enterAffixCoercion,
+                    ['option'] = {'prestige', 'affixcoercion'},
                     ['attunementOnly'] = true
                 },
                 {
@@ -743,11 +757,38 @@ SS.enterLootCoercion = function(frame)
     
     GameTooltip:SetOwner(frame, 'ANCHOR_RIGHT')
     GameTooltip:SetText('Loot Coercion', HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b)
-    GameTooltip:AddLine('This shows an increased chance for dropped items to be useful to you after prestige.', nil, nil, nil, true)
+    GameTooltip:AddLine('This shows an increased chance for dropped bind-on-pickup items to be useful to you after prestige.', nil, nil, nil, true)
     GameTooltip:AddLine(' ')
     GameTooltip:AddLine('Equal to your total account attunes relative to the total number of attunable items in the game.', nil, nil, nil, true)
     GameTooltip:AddLine(' ')
     GameTooltip:AddLine(SS.accountAttunes .. ' of ' .. SS.totalAccountAttunes .. ' items attuned.')
+    GameTooltip:Show()
+end
+
+SS.setStatAffixCoercion = function(frame)
+    if(SS.queuedAttunedUpdate) then
+        SS.countAttunes()
+    end
+    
+    if(SS.totalAccountAffixes ~= nil) then
+        local effect = ((100 / SS.totalAccountAffixes) * SS.attunedAffixes) / 4
+        
+        PaperDollFrame_SetLabelAndText(frame, 'Affix Coercion', string.format('%.2f', effect) .. '%')
+    end
+end
+
+SS.enterAffixCoercion = function(frame)
+    if(SS.queuedAttunedUpdate) then
+        SS.countAttunes()
+    end
+    
+    GameTooltip:SetOwner(frame, 'ANCHOR_RIGHT')
+    GameTooltip:SetText('Affix Coercion', HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b)
+    GameTooltip:AddLine('This shows an increased chance for dropped bind-on-equip items with an affix (e.g. "of the Eagle") to have your preferred affix (based on your affix manager settings) after prestige.', nil, nil, nil, true)
+    GameTooltip:AddLine(' ')
+    GameTooltip:AddLine('Equal to a quarter of your total account affix attunes relative to the total number of attunable affixes in the game.', nil, nil, nil, true)
+    GameTooltip:AddLine(' ')
+    GameTooltip:AddLine(SS.attunedAffixes .. ' of ' .. SS.totalAccountAffixes .. ' affixes attuned.')
     GameTooltip:Show()
 end
 
@@ -871,6 +912,7 @@ SS.toggleOptionsPanel = function(frame)
                         {'Char. Attunes', 'prestige', 'charattunes'},
                         {'Forge Power', 'prestige', 'forgepower'},
                         {'Loot Coercion', 'prestige', 'lootcoercion'},
+                        {'Affix Coercion', 'prestige', 'affixcoercion'},
                         {'Bonus Exp.', 'prestige', 'bonusexp'}
                     }
                 }
@@ -1064,6 +1106,7 @@ function SS.loadOptions()
             ['charattunes'] = true,
             ['forgepower'] = true,
             ['lootcoercion'] = true,
+            ['affixcoercion'] = true,
             ['bonusexp'] = true
         }
     }
@@ -1112,6 +1155,14 @@ function SS.loadOptions()
     end
 end
 
+SS.onLoad = function()
+    if(CalculateAttunableAffixCount and SS.totalAccountAffixes == nil) then
+        SS.totalAccountAffixes = CalculateAttunableAffixCount()
+    end
+    
+    SS.addonLoaded = true
+end
+
 function SS.onLogout()
     _G['SCOOTSSTATS_OPTIONS'] = SS.options
 end
@@ -1120,12 +1171,16 @@ function SS.watchChatForAttunement(message)
     if(string.find(message, 'You have attuned with', 1, true)) then
         SS.queuedUpdate = true
         SS.queuedAttunedUpdate = true
+        
+        if(string.find(message, 'Lightforged', 1, true)) then
+            SS.queuedLightforgeUpdate = true
+        end
     end
 end
 
 function SS.eventHandler(self, event, arg1)
     if(event == 'ADDON_LOADED' and arg1 == 'ScootsStats') then
-        SS.addonLoaded = true
+        SS.onLoad()
     elseif(event == 'PLAYER_LOGOUT') then
         SS.onLogout()
     elseif(event == 'CHAT_MSG_SYSTEM') then
