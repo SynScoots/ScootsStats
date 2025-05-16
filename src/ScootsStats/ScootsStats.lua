@@ -589,22 +589,25 @@ SS.enterAttune = function(frame)
     if(GetItemLinkAttuneProgress and CanAttuneItemHelper) then
         for _, slotId in ipairs(SS.slotIds) do
             local itemId = GetInventoryItemID('player', slotId)
-            local itemLink = GetInventoryItemLink('player', slotId)
-            local itemProgress = GetItemLinkAttuneProgress(itemLink)
             
-            if(CanAttuneItemHelper(itemId) >= 1 and itemProgress < 100) then
-                GameTooltip:AddDoubleLine(
-                    select(1, GetItemInfo(itemId)),
-                    string.format('%.2f', itemProgress) .. '%',
-                    NORMAL_FONT_COLOR.r,
-                    NORMAL_FONT_COLOR.g,
-                    NORMAL_FONT_COLOR.b,
-                    HIGHLIGHT_FONT_COLOR.r,
-                    HIGHLIGHT_FONT_COLOR.g,
-                    HIGHLIGHT_FONT_COLOR.b
-                )
+            if(itemId) then
+                local itemLink = GetInventoryItemLink('player', slotId)
+                local itemProgress = GetItemLinkAttuneProgress(itemLink)
                 
-                attuneCount = attuneCount + 1
+                if(CanAttuneItemHelper(itemId) >= 1 and itemProgress < 100) then
+                    GameTooltip:AddDoubleLine(
+                        select(1, GetItemInfo(itemId)),
+                        string.format('%.2f', itemProgress) .. '%',
+                        NORMAL_FONT_COLOR.r,
+                        NORMAL_FONT_COLOR.g,
+                        NORMAL_FONT_COLOR.b,
+                        HIGHLIGHT_FONT_COLOR.r,
+                        HIGHLIGHT_FONT_COLOR.g,
+                        HIGHLIGHT_FONT_COLOR.b
+                    )
+                    
+                    attuneCount = attuneCount + 1
+                end
             end
         end
     end
