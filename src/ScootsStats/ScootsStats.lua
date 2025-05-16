@@ -556,12 +556,15 @@ SS.setStatAttune = function(frame)
     if(GetItemLinkAttuneProgress and CanAttuneItemHelper) then
         for _, slotId in pairs(SS.slotIds) do
             local itemId = GetInventoryItemID('player', slotId)
-            local itemLink = GetInventoryItemLink('player', slotId)
-            local itemProgress = GetItemLinkAttuneProgress(itemLink)
             
-            if(CanAttuneItemHelper(itemId) >= 1 and itemProgress < 100) then
-                attuneCount = attuneCount + 1
-                attuneProgress = attuneProgress + itemProgress
+            if(itemId) then
+                local itemLink = GetInventoryItemLink('player', slotId)
+                local itemProgress = GetItemLinkAttuneProgress(itemLink)
+                
+                if(CanAttuneItemHelper(itemId) >= 1 and itemProgress < 100) then
+                    attuneCount = attuneCount + 1
+                    attuneProgress = attuneProgress + itemProgress
+                end
             end
         end
     end
