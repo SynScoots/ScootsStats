@@ -194,6 +194,13 @@ SS.applyFixesToOtherFrames = function()
             SS['moved' .. frameName] = true
         end
     end
+    
+    local children = {_G['TokenFrame']:GetChildren()}
+    for _, frame in pairs(children) do
+       if(type(frame) == 'table' and frame.GetName and not frame:GetName()) then
+          frame:Hide()
+       end
+    end
 end
 
 SS.setFrameLevels = function()
@@ -1153,6 +1160,8 @@ function SS.loadOptions()
             end
         end
     end
+    
+    SS.optionsLoaded = true
 end
 
 SS.onLoad = function()
@@ -1164,7 +1173,9 @@ SS.onLoad = function()
 end
 
 function SS.onLogout()
-    _G['SCOOTSSTATS_OPTIONS'] = SS.options
+    if(SS.optionsLoaded) then
+        _G['SCOOTSSTATS_OPTIONS'] = SS.options
+    end
 end
 
 function SS.watchChatForAttunement(message)
