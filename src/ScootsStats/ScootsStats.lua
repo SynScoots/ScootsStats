@@ -1,21 +1,21 @@
-SS = {}
-SS.initialised = false
-SS.characterFrameOpen = false
-SS.optionsOpen = false
-SS.frames = {}
-SS.frames.event = CreateFrame('Frame', 'ScootsStatsEventFrame', UIParent)
-SS.frames.master = CreateFrame('Frame', 'ScootsStatsMasterFrame', _G['CharacterFrame'])
-SS.queuedUpdate = false
-SS.queuedAttunedUpdate = false
-SS.hookedTabs = false
+ScootsStats = {}
+ScootsStats.initialised = false
+ScootsStats.characterFrameOpen = false
+ScootsStats.optionsOpen = false
+ScootsStats.frames = {}
+ScootsStats.frames.event = CreateFrame('Frame', 'ScootsStatsEventFrame', UIParent)
+ScootsStats.frames.master = CreateFrame('Frame', 'ScootsStatsMasterFrame', _G['CharacterFrame'])
+ScootsStats.queuedUpdate = false
+ScootsStats.queuedAttunedUpdate = false
+ScootsStats.hookedTabs = false
 
-SS.frames.event:SetScript('OnUpdate', function()
-    if(SS.addonLoaded) then
-        if(CalculateAttunableAffixCount and SS.totalAccountAffixes == nil) then
-            SS.totalAccountAffixes = CalculateAttunableAffixCount()
+ScootsStats.frames.event:SetScript('OnUpdate', function()
+    if(ScootsStats.addonLoaded) then
+        if(CalculateAttunableAffixCount and ScootsStats.totalAccountAffixes == nil) then
+            ScootsStats.totalAccountAffixes = CalculateAttunableAffixCount()
         end
     
-        if(SS.characterFrameOpen == false) then
+        if(ScootsStats.characterFrameOpen == false) then
             if(_G['CharacterFrame']
             and _G['CharacterFrame']:IsVisible() == 1
             and MAX_ITEMID
@@ -23,150 +23,151 @@ SS.frames.event:SetScript('OnUpdate', function()
             and HasAttunedAnyVariantOfItem
             and GetCustomGameDataCount
             and GetCustomGameData
-            and GetItemInfoCustom) then
-                SS.characterFrameOpen = true
-                SS.queuedUpdate = true
+            and GetItemInfoCustom
+            and HasAttunedAnyVariantEx) then
+                ScootsStats.characterFrameOpen = true
+                ScootsStats.queuedUpdate = true
                 
-                if(not SS.initialised) then
-                    SS.init()
-                    SS.queuedAttunedUpdate = true
-                    SS.queuedLightforgeUpdate = true
+                if(not ScootsStats.initialised) then
+                    ScootsStats.init()
+                    ScootsStats.queuedAttunedUpdate = true
+                    ScootsStats.queuedLightforgeUpdate = true
                 end
             end
         else
             if(_G['CharacterFrame'] and _G['CharacterFrame']:IsVisible() ~= 1) then
-                SS.characterFrameOpen = false
+                ScootsStats.characterFrameOpen = false
                 
-                if(SS.optionsOpen) then
-                    SS.toggleOptionsPanel()
+                if(ScootsStats.optionsOpen) then
+                    ScootsStats.toggleOptionsPanel()
                 end
             else
-                if(SS.queuedUpdate == true or SS.queuedAttunedUpdate == true) then
-                    SS.updateStats()
-                    SS.setFrameLevels()
+                if(ScootsStats.queuedUpdate == true or ScootsStats.queuedAttunedUpdate == true) then
+                    ScootsStats.updateStats()
+                    ScootsStats.setFrameLevels()
                     
-                    SS.queuedUpdate = false
+                    ScootsStats.queuedUpdate = false
                 end
             end
         end
         
-        if(SS.characterFrameOpen) then
-            SS.applyFixesToOtherFrames()
+        if(ScootsStats.characterFrameOpen) then
+            ScootsStats.applyFixesToOtherFrames()
         end
     end
 end)
 
-SS.init = function()
-    SS.initialised = true
-    SS.loadOptions()
-    SS.baseWidth = _G['CharacterFrame']:GetWidth()
-    SS.strata = _G['CharacterFrame']:GetFrameStrata()
-    SS.slotIds = {1, 2, 3, 15, 5, 9, 10, 6, 7, 8, 11, 12, 13, 14, 16, 17, 18}
-    SS.sectionFrames = {}
-    SS.rowFrames = {}
-    SS.optionFrames = {}
-    SS.optionToggleFrames = {}
+ScootsStats.init = function()
+    ScootsStats.initialised = true
+    ScootsStats.loadOptions()
+    ScootsStats.baseWidth = _G['CharacterFrame']:GetWidth()
+    ScootsStats.strata = _G['CharacterFrame']:GetFrameStrata()
+    ScootsStats.slotIds = {1, 2, 3, 15, 5, 9, 10, 6, 7, 8, 11, 12, 13, 14, 16, 17, 18}
+    ScootsStats.sectionFrames = {}
+    ScootsStats.rowFrames = {}
+    ScootsStats.optionFrames = {}
+    ScootsStats.optionToggleFrames = {}
     
 	_G['CharacterAttributesFrame']:Hide()
 	_G['CharacterModelFrame']:SetHeight(305)
     
-    SS.frames.otherTabHolder = CreateFrame('Frame', 'ScootsStatsSecondaryFrameHolder', _G['CharacterFrame'])
-    SS.frames.otherTabHolder:SetWidth(SS.baseWidth)
-    SS.frames.otherTabHolder:SetHeight(_G['CharacterFrame']:GetHeight())
-    SS.frames.otherTabHolder:SetPoint('TOPLEFT', _G['CharacterFrame'], 'TOPLEFT', 0, 0)
+    ScootsStats.frames.otherTabHolder = CreateFrame('Frame', 'ScootsStatsSecondaryFrameHolder', _G['CharacterFrame'])
+    ScootsStats.frames.otherTabHolder:SetWidth(ScootsStats.baseWidth)
+    ScootsStats.frames.otherTabHolder:SetHeight(_G['CharacterFrame']:GetHeight())
+    ScootsStats.frames.otherTabHolder:SetPoint('TOPLEFT', _G['CharacterFrame'], 'TOPLEFT', 0, 0)
     
-    SS.frames.master:SetPoint('TOPLEFT', SS.frames.otherTabHolder, 'TOPRIGHT', -35, 0)
-    SS.frames.master:SetHeight(439)
+    ScootsStats.frames.master:SetPoint('TOPLEFT', ScootsStats.frames.otherTabHolder, 'TOPRIGHT', -35, 0)
+    ScootsStats.frames.master:SetHeight(439)
     
-    SS.frames.scrollFrame = CreateFrame('ScrollFrame', 'ScootsStatsScrollFrame', SS.frames.master, 'UIPanelScrollFrameTemplate')
-    SS.frames.scrollFrame:SetFrameStrata(SS.strata)
+    ScootsStats.frames.scrollFrame = CreateFrame('ScrollFrame', 'ScootsStatsScrollFrame', ScootsStats.frames.master, 'UIPanelScrollFrameTemplate')
+    ScootsStats.frames.scrollFrame:SetFrameStrata(ScootsStats.strata)
     
-    SS.frames.scrollChild = CreateFrame('Frame', 'ScootsStatsScrollChild', SS.frames.scrollFrame)
-    SS.frames.scrollChild:SetFrameStrata(SS.strata)
+    ScootsStats.frames.scrollChild = CreateFrame('Frame', 'ScootsStatsScrollChild', ScootsStats.frames.scrollFrame)
+    ScootsStats.frames.scrollChild:SetFrameStrata(ScootsStats.strata)
     
-    local scrollBarName = SS.frames.scrollFrame:GetName()
-    SS.frames.scrollBar = _G[scrollBarName .. 'ScrollBar']
-    SS.frames.scrollUpButton = _G[scrollBarName .. 'ScrollBarScrollUpButton']
-    SS.frames.scrollDownButton = _G[scrollBarName .. 'ScrollBarScrollDownButton']
+    local scrollBarName = ScootsStats.frames.scrollFrame:GetName()
+    ScootsStats.frames.scrollBar = _G[scrollBarName .. 'ScrollBar']
+    ScootsStats.frames.scrollUpButton = _G[scrollBarName .. 'ScrollBarScrollUpButton']
+    ScootsStats.frames.scrollDownButton = _G[scrollBarName .. 'ScrollBarScrollDownButton']
 
-    SS.frames.scrollUpButton:ClearAllPoints()
-    SS.frames.scrollUpButton:SetPoint('TOPRIGHT', SS.frames.scrollFrame, 'TOPRIGHT', -2, -2)
+    ScootsStats.frames.scrollUpButton:ClearAllPoints()
+    ScootsStats.frames.scrollUpButton:SetPoint('TOPRIGHT', ScootsStats.frames.scrollFrame, 'TOPRIGHT', -2, -2)
 
-    SS.frames.scrollDownButton:ClearAllPoints()
-    SS.frames.scrollDownButton:SetPoint('BOTTOMRIGHT', SS.frames.scrollFrame, 'BOTTOMRIGHT', -2, 2)
+    ScootsStats.frames.scrollDownButton:ClearAllPoints()
+    ScootsStats.frames.scrollDownButton:SetPoint('BOTTOMRIGHT', ScootsStats.frames.scrollFrame, 'BOTTOMRIGHT', -2, 2)
 
-    SS.frames.scrollBar:ClearAllPoints()
-    SS.frames.scrollBar:SetPoint('TOP', SS.frames.scrollUpButton, 'BOTTOM', 0, -2)
-    SS.frames.scrollBar:SetPoint('BOTTOM', SS.frames.scrollDownButton, 'TOP', 0, 2)
+    ScootsStats.frames.scrollBar:ClearAllPoints()
+    ScootsStats.frames.scrollBar:SetPoint('TOP', ScootsStats.frames.scrollUpButton, 'BOTTOM', 0, -2)
+    ScootsStats.frames.scrollBar:SetPoint('BOTTOM', ScootsStats.frames.scrollDownButton, 'TOP', 0, 2)
 
-    SS.frames.scrollFrame:SetScrollChild(SS.frames.scrollChild)
-    SS.frames.scrollFrame:SetPoint('TOPLEFT', SS.frames.master, 'TOPLEFT', 0, -34)
-    SS.frames.scrollFrame:SetHeight(403)
+    ScootsStats.frames.scrollFrame:SetScrollChild(ScootsStats.frames.scrollChild)
+    ScootsStats.frames.scrollFrame:SetPoint('TOPLEFT', ScootsStats.frames.master, 'TOPLEFT', 0, -34)
+    ScootsStats.frames.scrollFrame:SetHeight(403)
     
-    SS.frames.optionsButton = CreateFrame('Button', 'ScootsStatsOptionsButton', SS.frames.master, 'UIPanelButtonTemplate')
-	SS.frames.optionsButton:SetSize(56, 19)
-	SS.frames.optionsButton:SetText('Options')
-	SS.frames.optionsButton:SetPoint('TOPRIGHT', SS.frames.master, 'TOPRIGHT', -6, -15)
-	SS.frames.optionsButton:SetFrameStrata(SS.strata)
-	SS.frames.optionsButton:SetScript('OnClick', SS.toggleOptionsPanel)
+    ScootsStats.frames.optionsButton = CreateFrame('Button', 'ScootsStatsOptionsButton', ScootsStats.frames.master, 'UIPanelButtonTemplate')
+	ScootsStats.frames.optionsButton:SetSize(56, 19)
+	ScootsStats.frames.optionsButton:SetText('Options')
+	ScootsStats.frames.optionsButton:SetPoint('TOPRIGHT', ScootsStats.frames.master, 'TOPRIGHT', -6, -15)
+	ScootsStats.frames.optionsButton:SetFrameStrata(ScootsStats.strata)
+	ScootsStats.frames.optionsButton:SetScript('OnClick', ScootsStats.toggleOptionsPanel)
     
-    SS.frames.title = CreateFrame('Frame', 'ScootsStatsTitle', SS.frames.master)
-    SS.frames.title:SetHeight(12)
-    SS.frames.title:SetPoint('TOPLEFT', SS.frames.master, 'TOPLEFT', 5, -19)
-	SS.frames.title:SetFrameStrata(SS.strata)
-    SS.frames.title.text = SS.frames.title:CreateFontString(nil, 'ARTWORK')
-    SS.frames.title.text:SetFont('Fonts\\FRIZQT__.TTF', 12)
-    SS.frames.title.text:SetPoint('TOPLEFT', 0, 0)
-    SS.frames.title.text:SetJustifyH('LEFT')
-    SS.frames.title.text:SetTextColor(1, 1, 1)
-    SS.frames.title.text:SetText('ScootsStats')
-    SS.frames.title:SetWidth(SS.frames.title.text:GetStringWidth())
+    ScootsStats.frames.title = CreateFrame('Frame', 'ScootsStatsTitle', ScootsStats.frames.master)
+    ScootsStats.frames.title:SetHeight(12)
+    ScootsStats.frames.title:SetPoint('TOPLEFT', ScootsStats.frames.master, 'TOPLEFT', 5, -19)
+	ScootsStats.frames.title:SetFrameStrata(ScootsStats.strata)
+    ScootsStats.frames.title.text = ScootsStats.frames.title:CreateFontString(nil, 'ARTWORK')
+    ScootsStats.frames.title.text:SetFont('Fonts\\FRIZQT__.TTF', 12)
+    ScootsStats.frames.title.text:SetPoint('TOPLEFT', 0, 0)
+    ScootsStats.frames.title.text:SetJustifyH('LEFT')
+    ScootsStats.frames.title.text:SetTextColor(1, 1, 1)
+    ScootsStats.frames.title.text:SetText('ScootsStats')
+    ScootsStats.frames.title:SetWidth(ScootsStats.frames.title.text:GetStringWidth())
     
-    SS.frames.background = CreateFrame('Frame', 'ScootsStatsBackground', SS.frames.master)
-    SS.frames.background:SetPoint('TOPLEFT', SS.frames.master, 'TOPLEFT', -20, 0)
-    SS.frames.background:SetHeight(SS.frames.master:GetHeight())
-	SS.frames.background:SetFrameStrata(SS.strata)
-    SS.frames.background.texture = SS.frames.background:CreateTexture()
-    SS.frames.background.texture:SetTexture([[Interface\AddOns\ScootsStats\Textures\Frame-Flyout.blp]])
-    SS.frames.background.texture:SetPoint('TOPRIGHT', 0, -1)
-    SS.frames.background.texture:SetSize(512, 512)
+    ScootsStats.frames.background = CreateFrame('Frame', 'ScootsStatsBackground', ScootsStats.frames.master)
+    ScootsStats.frames.background:SetPoint('TOPLEFT', ScootsStats.frames.master, 'TOPLEFT', -20, 0)
+    ScootsStats.frames.background:SetHeight(ScootsStats.frames.master:GetHeight())
+	ScootsStats.frames.background:SetFrameStrata(ScootsStats.strata)
+    ScootsStats.frames.background.texture = ScootsStats.frames.background:CreateTexture()
+    ScootsStats.frames.background.texture:SetTexture([[Interface\AddOns\ScootsStats\Textures\Frame-Flyout.blp]])
+    ScootsStats.frames.background.texture:SetPoint('TOPRIGHT', 0, -1)
+    ScootsStats.frames.background.texture:SetSize(512, 512)
     
-    _G['CharacterNameFrame']:SetPoint('TOPRIGHT', SS.frames.master, 'TOPLEFT', 33, -19)
-    _G['CharacterNameFrame']:SetWidth(SS.baseWidth)
+    _G['CharacterNameFrame']:SetPoint('TOPRIGHT', ScootsStats.frames.master, 'TOPLEFT', 33, -19)
+    _G['CharacterNameFrame']:SetWidth(ScootsStats.baseWidth)
     
-    _G['CharacterFrameCloseButton']:SetPoint('TOPRIGHT', SS.frames.otherTabHolder, 'TOPRIGHT', -28, -9)
+    _G['CharacterFrameCloseButton']:SetPoint('TOPRIGHT', ScootsStats.frames.otherTabHolder, 'TOPRIGHT', -28, -9)
     
     _G['GearManagerToggleButton']:ClearAllPoints()
     _G['GearManagerToggleButton']:SetPoint('TOPLEFT', _G['CharacterFrame'], 'TOPLEFT', 315, -40)
     
-    SS.sectionFrames = {}
-    SS.rowFrames = {}
+    ScootsStats.sectionFrames = {}
+    ScootsStats.rowFrames = {}
     
-    SS.old_cu_uib = _cu_uib
+    ScootsStats.old_cu_uib = _cu_uib
     _cu_uib = function(type)
-        SS.queuedUpdate = true
-        return SS.old_cu_uib(type)
+        ScootsStats.queuedUpdate = true
+        return ScootsStats.old_cu_uib(type)
     end
     
-    SS.totalCharacterAttunes = 0
-    SS.totalAccountAttunes = 0
+    ScootsStats.totalCharacterAttunes = 0
+    ScootsStats.totalAccountAttunes = 0
     for itemId = 1, MAX_ITEMID do
         local itemTags = GetItemTagsCustom(itemId)
         if(itemTags and bit.band(itemTags, 96) == 64) then
-            SS.totalAccountAttunes = SS.totalAccountAttunes + 1
+            ScootsStats.totalAccountAttunes = ScootsStats.totalAccountAttunes + 1
             
             if(CanAttuneItemHelper(itemId) > 0) then
-                SS.totalCharacterAttunes = SS.totalCharacterAttunes + 1
+                ScootsStats.totalCharacterAttunes = ScootsStats.totalCharacterAttunes + 1
             end
         end
     end
     
-    if(SS.totalAccountAffixes == nil) then
-        SS.totalAccountAffixes = CalculateAttunableAffixCount()
+    if(ScootsStats.totalAccountAffixes == nil) then
+        ScootsStats.totalAccountAffixes = CalculateAttunableAffixCount()
     end
 end
 
-SS.applyFixesToOtherFrames = function()
+ScootsStats.applyFixesToOtherFrames = function()
     local frames = {
         'PaperDollFrame',
         'PetPaperDollFrame',
@@ -176,11 +177,11 @@ SS.applyFixesToOtherFrames = function()
     }
     
     for _, frameName in pairs(frames) do
-        if(_G[frameName] and _G[frameName]:IsVisible() and SS['moved' .. frameName] == nil) then
-            _G[frameName]:SetParent(SS.frames.otherTabHolder)
+        if(_G[frameName] and _G[frameName]:IsVisible() and ScootsStats['moved' .. frameName] == nil) then
+            _G[frameName]:SetParent(ScootsStats.frames.otherTabHolder)
             _G[frameName]:SetAllPoints()
             _G[frameName]:SetFrameLevel(_G['CharacterFrame']:GetFrameLevel() + 5)
-            SS['moved' .. frameName] = true
+            ScootsStats['moved' .. frameName] = true
         end
     end
     
@@ -189,9 +190,9 @@ SS.applyFixesToOtherFrames = function()
     }
     
     for _, frameName in pairs(frames) do
-        if(_G[frameName] and _G[frameName]:IsVisible() and SS['moved' .. frameName] == nil) then
+        if(_G[frameName] and _G[frameName]:IsVisible() and ScootsStats['moved' .. frameName] == nil) then
             _G[frameName]:SetFrameLevel(_G['PaperDollFrame']:GetFrameLevel() + 5)
-            SS['moved' .. frameName] = true
+            ScootsStats['moved' .. frameName] = true
         end
     end
     
@@ -203,66 +204,65 @@ SS.applyFixesToOtherFrames = function()
     end
 end
 
-SS.setFrameLevels = function()
+ScootsStats.setFrameLevels = function()
     local baseLevel = _G['PaperDollFrame']:GetFrameLevel()
     
-    SS.frames.master:SetFrameLevel(baseLevel + 1)
-    SS.frames.scrollFrame:SetFrameLevel(baseLevel + 2)
-    SS.frames.scrollChild:SetFrameLevel(baseLevel + 3)
-    SS.frames.scrollBar:SetFrameLevel(baseLevel + 3)
-    SS.frames.scrollUpButton:SetFrameLevel(baseLevel + 3)
-    SS.frames.scrollDownButton:SetFrameLevel(baseLevel + 3)
-    SS.frames.optionsButton:SetFrameLevel(baseLevel + 1)
-    SS.frames.title:SetFrameLevel(baseLevel + 1)
-    SS.frames.background:SetFrameLevel(baseLevel - 1)
+    ScootsStats.frames.master:SetFrameLevel(baseLevel + 1)
+    ScootsStats.frames.scrollFrame:SetFrameLevel(baseLevel + 2)
+    ScootsStats.frames.scrollChild:SetFrameLevel(baseLevel + 3)
+    ScootsStats.frames.scrollBar:SetFrameLevel(baseLevel + 3)
+    ScootsStats.frames.scrollUpButton:SetFrameLevel(baseLevel + 3)
+    ScootsStats.frames.scrollDownButton:SetFrameLevel(baseLevel + 3)
+    ScootsStats.frames.optionsButton:SetFrameLevel(baseLevel + 1)
+    ScootsStats.frames.title:SetFrameLevel(baseLevel + 1)
+    ScootsStats.frames.background:SetFrameLevel(baseLevel - 1)
     
-    for _, frame in pairs(SS.sectionFrames) do
+    for _, frame in pairs(ScootsStats.sectionFrames) do
         frame:SetFrameLevel(baseLevel + 4)
     end
     
-    if(SS.frames.options) then
-        SS.frames.options:SetFrameLevel(baseLevel + 1)
+    if(ScootsStats.frames.options) then
+        ScootsStats.frames.options:SetFrameLevel(baseLevel + 1)
     end
     
-    if(SS.frames.optionToggleFrames) then
-        SS.frames.options:SetFrameLevel(baseLevel + 2)
-        SS.frames.options.checkBorder:SetFrameLevel(baseLevel + 3)
-        SS.frames.options.check:SetFrameLevel(baseLevel + 4)
+    if(ScootsStats.frames.optionToggleFrames) then
+        ScootsStats.frames.options:SetFrameLevel(baseLevel + 2)
+        ScootsStats.frames.options.checkBorder:SetFrameLevel(baseLevel + 3)
+        ScootsStats.frames.options.check:SetFrameLevel(baseLevel + 4)
     end
     
-    for _, frame in pairs(SS.optionFrames) do
+    for _, frame in pairs(ScootsStats.optionFrames) do
         frame:SetFrameLevel(baseLevel + 2)
     end
 end
 
-SS.countAttunes = function()
-    if(SS.queuedLightforgeUpdate) then
-        SS.highLevelLightForges = 0
-        SS.bonusExpEffect = 0
-        local attunedItemCount = GetCustomGameDataCount(11)
-        for i = 1, attunedItemCount do
-            local itemId = GetCustomGameDataIndex(11, i)
-            
-            if(bit.band(itemId, 0x00FF0000) == 0 and bit.rshift(itemId, 24) == 3 and GetCustomGameData(11, itemId) >= 100) then
-                _, _, _, itemLevel = GetItemInfoCustom(bit.band(itemId, 0xffff))
+ScootsStats.countAttunes = function()
+    if(ScootsStats.queuedLightforgeUpdate) then
+        ScootsStats.highLevelLightForges = 0
+        ScootsStats.bonusExpEffect = 0
+        
+        for itemId = 1, MAX_ITEMID do
+            if(HasAttunedAnyVariantEx(itemId, 3)) then
+                local _, _, _, itemLevel = GetItemInfoCustom(itemId)
+                
                 if(itemLevel > 200) then
-                    SS.bonusExpEffect = SS.bonusExpEffect + (itemLevel - 200) / 84
-                    SS.highLevelLightForges = SS.highLevelLightForges + 1
+                    ScootsStats.bonusExpEffect = ScootsStats.bonusExpEffect + (itemLevel - 200) / 84
+                    ScootsStats.highLevelLightForges = ScootsStats.highLevelLightForges + 1
                 end
             end
         end
     end
     
-    SS.characterAttunes = CalculateAttunedCount(1)
-    SS.accountAttunes, SS.accountAttunesTF, SS.accountAttunesWF, SS.accountAttunesLF = CalculateAttunedCount()
-    SS.attunedAffixes = CalculateAttunedAffixCount()
+    ScootsStats.characterAttunes = CalculateAttunedCount(1)
+    ScootsStats.accountAttunes, ScootsStats.accountAttunesTF, ScootsStats.accountAttunesWF, ScootsStats.accountAttunesLF = CalculateAttunedCount()
+    ScootsStats.attunedAffixes = CalculateAttunedAffixCount()
     
-    SS.queuedAttunedUpdate = false
-    SS.queuedLightforgeUpdate = false
+    ScootsStats.queuedAttunedUpdate = false
+    ScootsStats.queuedLightforgeUpdate = false
 end
 
-SS.updateStats = function()
-    for _, frame in pairs(SS.sectionFrames) do
+ScootsStats.updateStats = function()
+    for _, frame in pairs(ScootsStats.sectionFrames) do
         frame:Hide()
     end
     
@@ -271,14 +271,14 @@ SS.updateStats = function()
             ['title'] = 'Miscellaneous',
             ['rows'] = {
                 {
-                    ['display'] = SS.setStatAttune,
-                    ['onEnter'] = SS.enterAttune,
+                    ['display'] = ScootsStats.setStatAttune,
+                    ['onEnter'] = ScootsStats.enterAttune,
                     ['option'] = {'misc', 'attuning'}
                 },
                 {
-                    ['display'] = SS.setStatMovementSpeed,
-                    ['onEnter'] = SS.enterMovementSpeed,
-                    ['onUpdate'] = SS.setStatMovementSpeed,
+                    ['display'] = ScootsStats.setStatMovementSpeed,
+                    ['onEnter'] = ScootsStats.enterMovementSpeed,
+                    ['onUpdate'] = ScootsStats.setStatMovementSpeed,
                     ['option'] = {'misc', 'movespeed'}
                 }
             }
@@ -436,31 +436,31 @@ SS.updateStats = function()
             ['title'] = 'Prestige',
             ['rows'] = {
                 {
-                    ['display'] = SS.setStatCharacterAttunes,
-                    ['onEnter'] = SS.enterCharacterAttunes,
+                    ['display'] = ScootsStats.setStatCharacterAttunes,
+                    ['onEnter'] = ScootsStats.enterCharacterAttunes,
                     ['option'] = {'prestige', 'charattunes'}
                 },
                 {
-                    ['display'] = SS.setStatForgePower,
-                    ['onEnter'] = SS.enterForgePower,
+                    ['display'] = ScootsStats.setStatForgePower,
+                    ['onEnter'] = ScootsStats.enterForgePower,
                     ['option'] = {'prestige', 'forgepower'},
                     ['attunementOnly'] = true
                 },
                 {
-                    ['display'] = SS.setStatLootCoercion,
-                    ['onEnter'] = SS.enterLootCoercion,
+                    ['display'] = ScootsStats.setStatLootCoercion,
+                    ['onEnter'] = ScootsStats.enterLootCoercion,
                     ['option'] = {'prestige', 'lootcoercion'},
                     ['attunementOnly'] = true
                 },
                 {
-                    ['display'] = SS.setStatAffixCoercion,
-                    ['onEnter'] = SS.enterAffixCoercion,
+                    ['display'] = ScootsStats.setStatAffixCoercion,
+                    ['onEnter'] = ScootsStats.enterAffixCoercion,
                     ['option'] = {'prestige', 'affixcoercion'},
                     ['attunementOnly'] = true
                 },
                 {
-                    ['display'] = SS.setStatBonusExp,
-                    ['onEnter'] = SS.enterBonusExp,
+                    ['display'] = ScootsStats.setStatBonusExp,
+                    ['onEnter'] = ScootsStats.enterBonusExp,
                     ['option'] = {'prestige', 'bonusexp'},
                     ['attunementOnly'] = true
                 }
@@ -469,7 +469,7 @@ SS.updateStats = function()
     }
     
     local prevFrame = nil
-    local minWidth = SS.frames.title:GetWidth() + SS.frames.optionsButton:GetWidth() + 10
+    local minWidth = ScootsStats.frames.title:GetWidth() + ScootsStats.frames.optionsButton:GetWidth() + 10
     local frameHeight = 5
     
     for sectionIndex, section in ipairs(layout) do
@@ -479,61 +479,61 @@ SS.updateStats = function()
         for rowIndex, row in ipairs(section.rows) do
             local rowKey = sectionKey .. '-' .. tostring(rowIndex)
             
-            if(SS.options[row.option[1]][row.option[2]] ~= true) then
-                if(SS.rowFrames[rowKey]) then
-                    SS.rowFrames[rowKey]:Hide()
+            if(ScootsStats.options[row.option[1]][row.option[2]] ~= true) then
+                if(ScootsStats.rowFrames[rowKey]) then
+                    ScootsStats.rowFrames[rowKey]:Hide()
                 end
             else
                 if(not pushedHeader) then
-                    if(not SS.sectionFrames[sectionKey]) then
-                        SS.sectionFrames[sectionKey] = CreateFrame('Frame', 'ScootsStatsSectionHead' .. sectionKey, SS.frames.scrollChild)
-                        SS.sectionFrames[sectionKey]:SetHeight(10)
-                        SS.sectionFrames[sectionKey]:SetFrameStrata(SS.strata)
-                        SS.sectionFrames[sectionKey].text = SS.sectionFrames[sectionKey]:CreateFontString(nil, 'ARTWORK')
-                        SS.sectionFrames[sectionKey].text:SetFont('Fonts\\FRIZQT__.TTF', 10)
-                        SS.sectionFrames[sectionKey].text:SetPoint('CENTER', 0, 0)
-                        SS.sectionFrames[sectionKey].text:SetJustifyH('CENTER')
-                        SS.sectionFrames[sectionKey].text:SetTextColor(1, 1, 1)
-                        SS.sectionFrames[sectionKey].text:SetText(section.title)
+                    if(not ScootsStats.sectionFrames[sectionKey]) then
+                        ScootsStats.sectionFrames[sectionKey] = CreateFrame('Frame', 'ScootsStatsSectionHead' .. sectionKey, ScootsStats.frames.scrollChild)
+                        ScootsStats.sectionFrames[sectionKey]:SetHeight(10)
+                        ScootsStats.sectionFrames[sectionKey]:SetFrameStrata(ScootsStats.strata)
+                        ScootsStats.sectionFrames[sectionKey].text = ScootsStats.sectionFrames[sectionKey]:CreateFontString(nil, 'ARTWORK')
+                        ScootsStats.sectionFrames[sectionKey].text:SetFont('Fonts\\FRIZQT__.TTF', 10)
+                        ScootsStats.sectionFrames[sectionKey].text:SetPoint('CENTER', 0, 0)
+                        ScootsStats.sectionFrames[sectionKey].text:SetJustifyH('CENTER')
+                        ScootsStats.sectionFrames[sectionKey].text:SetTextColor(1, 1, 1)
+                        ScootsStats.sectionFrames[sectionKey].text:SetText(section.title)
                     end
                         
                     if(prevFrame == nil) then
-                        SS.sectionFrames[sectionKey]:SetPoint('TOPLEFT', SS.frames.scrollChild, 'TOPLEFT', 5, -5)
+                        ScootsStats.sectionFrames[sectionKey]:SetPoint('TOPLEFT', ScootsStats.frames.scrollChild, 'TOPLEFT', 5, -5)
                     else
-                        SS.sectionFrames[sectionKey]:SetPoint('TOPLEFT', prevFrame, 'BOTTOMLEFT', 0, -5)
+                        ScootsStats.sectionFrames[sectionKey]:SetPoint('TOPLEFT', prevFrame, 'BOTTOMLEFT', 0, -5)
                     end
                     
-                    SS.sectionFrames[sectionKey]:Show()
-                    minWidth = math.max(minWidth, SS.sectionFrames[sectionKey].text:GetWidth())
-                    prevFrame = SS.sectionFrames[sectionKey]
+                    ScootsStats.sectionFrames[sectionKey]:Show()
+                    minWidth = math.max(minWidth, ScootsStats.sectionFrames[sectionKey].text:GetWidth())
+                    prevFrame = ScootsStats.sectionFrames[sectionKey]
                     pushedHeader = true
                     frameHeight = frameHeight + 15
                 end
                 
-                if(not SS.rowFrames[rowKey]) then
-                    SS.rowFrames[rowKey] = CreateFrame('Frame', 'ScootsStatsRow' .. rowKey, SS.frames.scrollChild, 'StatFrameTemplate')
-                    SS.rowFrames[rowKey]:SetHeight(10)
-                    SS.rowFrames[rowKey]:SetFrameStrata(SS.strata)
+                if(not ScootsStats.rowFrames[rowKey]) then
+                    ScootsStats.rowFrames[rowKey] = CreateFrame('Frame', 'ScootsStatsRow' .. rowKey, ScootsStats.frames.scrollChild, 'StatFrameTemplate')
+                    ScootsStats.rowFrames[rowKey]:SetHeight(10)
+                    ScootsStats.rowFrames[rowKey]:SetFrameStrata(ScootsStats.strata)
                     
                     if(row.onEnter) then
-                        SS.rowFrames[rowKey]:SetScript('OnEnter', row.onEnter)
+                        ScootsStats.rowFrames[rowKey]:SetScript('OnEnter', row.onEnter)
                     end
                     
                     if(row.onUpdate) then
-                        SS.rowFrames[rowKey]:SetScript('OnUpdate', row.onUpdate)
+                        ScootsStats.rowFrames[rowKey]:SetScript('OnUpdate', row.onUpdate)
                     end
                 end
                 
-                SS.rowFrames[rowKey]:Show()
-                row.display(SS.rowFrames[rowKey], row.argument)
+                ScootsStats.rowFrames[rowKey]:Show()
+                row.display(ScootsStats.rowFrames[rowKey], row.argument)
                 
-                SS.rowFrames[rowKey]:SetPoint('TOPLEFT', prevFrame, 'BOTTOMLEFT', 0, -1)
-                prevFrame = SS.rowFrames[rowKey]
+                ScootsStats.rowFrames[rowKey]:SetPoint('TOPLEFT', prevFrame, 'BOTTOMLEFT', 0, -1)
+                prevFrame = ScootsStats.rowFrames[rowKey]
                 frameHeight = frameHeight + 10 + 1
 				
-				local labelWidth = _G[SS.rowFrames[rowKey]:GetName() .. 'Label']:GetWidth()
+				local labelWidth = _G[ScootsStats.rowFrames[rowKey]:GetName() .. 'Label']:GetWidth()
                 
-				local dataWidth = _G[SS.rowFrames[rowKey]:GetName() .. 'StatText']:GetWidth()
+				local dataWidth = _G[ScootsStats.rowFrames[rowKey]:GetName() .. 'StatText']:GetWidth()
                 if(row.option[1] == 'misc' and row.option[2] == 'movespeed') then
                     dataWidth = math.max(dataWidth, 30)
                 end
@@ -543,39 +543,39 @@ SS.updateStats = function()
         end
     end
     
-    for _, frame in pairs(SS.sectionFrames) do
+    for _, frame in pairs(ScootsStats.sectionFrames) do
         frame:SetWidth(minWidth)
     end
     
-    for _, frame in pairs(SS.rowFrames) do
+    for _, frame in pairs(ScootsStats.rowFrames) do
         frame:SetWidth(minWidth)
     end
     
     local scrollWidth = 0
-    if(frameHeight <= SS.frames.scrollFrame:GetHeight()) then
-        SS.frames.scrollBar:Hide()
+    if(frameHeight <= ScootsStats.frames.scrollFrame:GetHeight()) then
+        ScootsStats.frames.scrollBar:Hide()
     else
-        SS.frames.scrollBar:Show()
-        scrollWidth = SS.frames.scrollBar:GetWidth()
+        ScootsStats.frames.scrollBar:Show()
+        scrollWidth = ScootsStats.frames.scrollBar:GetWidth()
     end
     
-    SS.frames.scrollFrame:SetWidth(minWidth + 10 + scrollWidth)
+    ScootsStats.frames.scrollFrame:SetWidth(minWidth + 10 + scrollWidth)
     
-    SS.frames.scrollChild:SetWidth(minWidth + 10)
-    SS.frames.scrollChild:SetHeight(frameHeight)
+    ScootsStats.frames.scrollChild:SetWidth(minWidth + 10)
+    ScootsStats.frames.scrollChild:SetHeight(frameHeight)
     
-    SS.frames.master:SetWidth(SS.frames.scrollChild:GetWidth() + 5 + scrollWidth)
+    ScootsStats.frames.master:SetWidth(ScootsStats.frames.scrollChild:GetWidth() + 5 + scrollWidth)
     
-    SS.frames.background:SetWidth(SS.frames.master:GetWidth() + 20)
-    _G['CharacterFrame']:SetWidth(SS.baseWidth + SS.frames.master:GetWidth())
+    ScootsStats.frames.background:SetWidth(ScootsStats.frames.master:GetWidth() + 20)
+    _G['CharacterFrame']:SetWidth(ScootsStats.baseWidth + ScootsStats.frames.master:GetWidth())
 end
 
-SS.setStatAttune = function(frame)
+ScootsStats.setStatAttune = function(frame)
     local attuneCount = 0
     local attuneProgress = 0
     
     if(GetItemLinkAttuneProgress and CanAttuneItemHelper) then
-        for _, slotId in pairs(SS.slotIds) do
+        for _, slotId in pairs(ScootsStats.slotIds) do
             local itemId = GetInventoryItemID('player', slotId)
             
             if(itemId) then
@@ -602,13 +602,13 @@ SS.setStatAttune = function(frame)
     end
 end
 
-SS.enterAttune = function(frame)
+ScootsStats.enterAttune = function(frame)
     GameTooltip:SetOwner(frame, 'ANCHOR_RIGHT')
     GameTooltip:SetText('Item Attunements', HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b)
     
     local attuneCount = 0
     if(GetItemLinkAttuneProgress and CanAttuneItemHelper) then
-        for _, slotId in ipairs(SS.slotIds) do
+        for _, slotId in ipairs(ScootsStats.slotIds) do
             local itemId = GetInventoryItemID('player', slotId)
             
             if(itemId) then
@@ -638,54 +638,54 @@ SS.enterAttune = function(frame)
     end
 end
 
-SS.setStatMovementSpeed = function(frame)
-    if(SS.characterFrameOpen) then
+ScootsStats.setStatMovementSpeed = function(frame)
+    if(ScootsStats.characterFrameOpen) then
         PaperDollFrame_SetLabelAndText(frame, 'Run Speed', string.format('%d', (GetUnitSpeed('Player') / 7) * 100) .. '%')
     end
 end
 
-SS.enterMovementSpeed = function(frame)
+ScootsStats.enterMovementSpeed = function(frame)
     GameTooltip:SetOwner(frame, 'ANCHOR_RIGHT')
     GameTooltip:SetText('Run Speed', HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b)
     GameTooltip:AddLine('Shows the speed you are currently moving at.', nil, nil, nil, true)
     GameTooltip:Show()
 end
 
-SS.setStatCharacterAttunes = function(frame)
-    if(SS.queuedAttunedUpdate) then
-        SS.countAttunes()
+ScootsStats.setStatCharacterAttunes = function(frame)
+    if(ScootsStats.queuedAttunedUpdate) then
+        ScootsStats.countAttunes()
     end
     
-    PaperDollFrame_SetLabelAndText(frame, 'Char. Attunes', string.format('%.2f', (100 / SS.totalCharacterAttunes) * SS.characterAttunes) .. '%')
+    PaperDollFrame_SetLabelAndText(frame, 'Char. Attunes', string.format('%.2f', (100 / ScootsStats.totalCharacterAttunes) * ScootsStats.characterAttunes) .. '%')
 end
 
-SS.enterCharacterAttunes = function(frame)
-    if(SS.queuedAttunedUpdate) then
-        SS.countAttunes()
+ScootsStats.enterCharacterAttunes = function(frame)
+    if(ScootsStats.queuedAttunedUpdate) then
+        ScootsStats.countAttunes()
     end
     
     GameTooltip:SetOwner(frame, 'ANCHOR_RIGHT')
     GameTooltip:SetText('Character Attunes', HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b)
     GameTooltip:AddLine('This shows your progress towards attuning all items available for your current character.', nil, nil, nil, true)
     GameTooltip:AddLine(' ')
-    GameTooltip:AddLine(tostring(SS.characterAttunes) .. ' of ' .. tostring(SS.totalCharacterAttunes) .. ' items attuned.', nil, nil, nil, true)
+    GameTooltip:AddLine(tostring(ScootsStats.characterAttunes) .. ' of ' .. tostring(ScootsStats.totalCharacterAttunes) .. ' items attuned.', nil, nil, nil, true)
 end
 
-SS.setStatForgePower = function(frame)
-    if(SS.queuedAttunedUpdate) then
-        SS.countAttunes()
+ScootsStats.setStatForgePower = function(frame)
+    if(ScootsStats.queuedAttunedUpdate) then
+        ScootsStats.countAttunes()
     end
     
-    local titan = (SS.accountAttunesTF / 100) ^ 0.7
-    local war = (SS.accountAttunesWF / 15) ^ 0.7
-    local light = SS.accountAttunesLF ^ 0.7
+    local titan = (ScootsStats.accountAttunesTF / 100) ^ 0.7
+    local war = (ScootsStats.accountAttunesWF / 15) ^ 0.7
+    local light = ScootsStats.accountAttunesLF ^ 0.7
     
     PaperDollFrame_SetLabelAndText(frame, 'Forge Power', string.format('%.2f', titan + war + light) .. '%')
 end
 
-SS.enterForgePower = function(frame)
-    if(SS.queuedAttunedUpdate) then
-        SS.countAttunes()
+ScootsStats.enterForgePower = function(frame)
+    if(ScootsStats.queuedAttunedUpdate) then
+        ScootsStats.countAttunes()
     end
     
     GameTooltip:SetOwner(frame, 'ANCHOR_RIGHT')
@@ -695,16 +695,16 @@ SS.enterForgePower = function(frame)
     GameTooltip:AddLine('Increased by attuning forged items across your entire account.', nil, nil, nil, true)
     GameTooltip:AddLine(' ')
     
-    local titanEffect = (SS.accountAttunesTF / 100) ^ 0.7
-    local warEffect = (SS.accountAttunesWF / 15) ^ 0.7
-    local lightEffect = SS.accountAttunesLF ^ 0.7
+    local titanEffect = (ScootsStats.accountAttunesTF / 100) ^ 0.7
+    local warEffect = (ScootsStats.accountAttunesWF / 15) ^ 0.7
+    local lightEffect = ScootsStats.accountAttunesLF ^ 0.7
     
     local s = 's'
-    if(SS.accountAttunesTF == 1) then
+    if(ScootsStats.accountAttunesTF == 1) then
         s = ''
     end
     GameTooltip:AddDoubleLine(
-        SS.accountAttunesTF .. ' titanforged item' .. s,
+        ScootsStats.accountAttunesTF .. ' titanforged item' .. s,
         string.format('%.2f', titanEffect) .. '%',
         NORMAL_FONT_COLOR.r,
         NORMAL_FONT_COLOR.g,
@@ -715,11 +715,11 @@ SS.enterForgePower = function(frame)
     )
     
     s = 's'
-    if(SS.accountAttunesWF == 1) then
+    if(ScootsStats.accountAttunesWF == 1) then
         s = ''
     end
     GameTooltip:AddDoubleLine(
-        SS.accountAttunesWF .. ' warforged item' .. s,
+        ScootsStats.accountAttunesWF .. ' warforged item' .. s,
         string.format('%.2f', warEffect) .. '%',
         NORMAL_FONT_COLOR.r,
         NORMAL_FONT_COLOR.g,
@@ -730,11 +730,11 @@ SS.enterForgePower = function(frame)
     )
     
     s = 's'
-    if(SS.accountAttunesLF == 1) then
+    if(ScootsStats.accountAttunesLF == 1) then
         s = ''
     end
     GameTooltip:AddDoubleLine(
-        SS.accountAttunesLF .. ' lightforged item' .. s,
+        ScootsStats.accountAttunesLF .. ' lightforged item' .. s,
         string.format('%.2f', lightEffect) .. '%',
         NORMAL_FONT_COLOR.r,
         NORMAL_FONT_COLOR.g,
@@ -747,19 +747,19 @@ SS.enterForgePower = function(frame)
     GameTooltip:Show()
 end
 
-SS.setStatLootCoercion = function(frame)
-    if(SS.queuedAttunedUpdate) then
-        SS.countAttunes()
+ScootsStats.setStatLootCoercion = function(frame)
+    if(ScootsStats.queuedAttunedUpdate) then
+        ScootsStats.countAttunes()
     end
     
-    local effect = (100 / SS.totalAccountAttunes) * SS.accountAttunes
+    local effect = (100 / ScootsStats.totalAccountAttunes) * ScootsStats.accountAttunes
     
     PaperDollFrame_SetLabelAndText(frame, 'Loot Coercion', string.format('%.2f', effect) .. '%')
 end
 
-SS.enterLootCoercion = function(frame)
-    if(SS.queuedAttunedUpdate) then
-        SS.countAttunes()
+ScootsStats.enterLootCoercion = function(frame)
+    if(ScootsStats.queuedAttunedUpdate) then
+        ScootsStats.countAttunes()
     end
     
     GameTooltip:SetOwner(frame, 'ANCHOR_RIGHT')
@@ -768,25 +768,25 @@ SS.enterLootCoercion = function(frame)
     GameTooltip:AddLine(' ')
     GameTooltip:AddLine('Equal to your total account attunes relative to the total number of attunable items in the game.', nil, nil, nil, true)
     GameTooltip:AddLine(' ')
-    GameTooltip:AddLine(SS.accountAttunes .. ' of ' .. SS.totalAccountAttunes .. ' items attuned.')
+    GameTooltip:AddLine(ScootsStats.accountAttunes .. ' of ' .. ScootsStats.totalAccountAttunes .. ' items attuned.')
     GameTooltip:Show()
 end
 
-SS.setStatAffixCoercion = function(frame)
-    if(SS.queuedAttunedUpdate) then
-        SS.countAttunes()
+ScootsStats.setStatAffixCoercion = function(frame)
+    if(ScootsStats.queuedAttunedUpdate) then
+        ScootsStats.countAttunes()
     end
     
-    if(SS.totalAccountAffixes ~= nil) then
-        local effect = ((100 / SS.totalAccountAffixes) * SS.attunedAffixes) / 4
+    if(ScootsStats.totalAccountAffixes ~= nil) then
+        local effect = ((100 / ScootsStats.totalAccountAffixes) * ScootsStats.attunedAffixes) / 4
         
         PaperDollFrame_SetLabelAndText(frame, 'Affix Coercion', string.format('%.2f', effect) .. '%')
     end
 end
 
-SS.enterAffixCoercion = function(frame)
-    if(SS.queuedAttunedUpdate) then
-        SS.countAttunes()
+ScootsStats.enterAffixCoercion = function(frame)
+    if(ScootsStats.queuedAttunedUpdate) then
+        ScootsStats.countAttunes()
     end
     
     GameTooltip:SetOwner(frame, 'ANCHOR_RIGHT')
@@ -795,21 +795,21 @@ SS.enterAffixCoercion = function(frame)
     GameTooltip:AddLine(' ')
     GameTooltip:AddLine('Equal to a quarter of your total account affix attunes relative to the total number of attunable affixes in the game.', nil, nil, nil, true)
     GameTooltip:AddLine(' ')
-    GameTooltip:AddLine(SS.attunedAffixes .. ' of ' .. SS.totalAccountAffixes .. ' affixes attuned.')
+    GameTooltip:AddLine(ScootsStats.attunedAffixes .. ' of ' .. ScootsStats.totalAccountAffixes .. ' affixes attuned.')
     GameTooltip:Show()
 end
 
-SS.setStatBonusExp = function(frame)
-    if(SS.queuedAttunedUpdate) then
-        SS.countAttunes()
+ScootsStats.setStatBonusExp = function(frame)
+    if(ScootsStats.queuedAttunedUpdate) then
+        ScootsStats.countAttunes()
     end
 
-    PaperDollFrame_SetLabelAndText(frame, 'Bonus Exp.', string.format('%.2f', SS.bonusExpEffect) .. '%')
+    PaperDollFrame_SetLabelAndText(frame, 'Bonus Exp.', string.format('%.2f', ScootsStats.bonusExpEffect) .. '%')
 end
 
-SS.enterBonusExp = function(frame)
-    if(SS.queuedAttunedUpdate) then
-        SS.countAttunes()
+ScootsStats.enterBonusExp = function(frame)
+    if(ScootsStats.queuedAttunedUpdate) then
+        ScootsStats.countAttunes()
     end
     
     GameTooltip:SetOwner(frame, 'ANCHOR_RIGHT')
@@ -819,14 +819,14 @@ SS.enterBonusExp = function(frame)
     GameTooltip:AddLine('Increased by attuning lightforged items with an item level above 200.', nil, nil, nil, true)
     GameTooltip:AddLine(' ')
     local s = 's'
-    if(SS.highLevelLightForges == 1) then
+    if(ScootsStats.highLevelLightForges == 1) then
         s = ''
     end
-    GameTooltip:AddLine(SS.highLevelLightForges .. ' high item level lightforged attune' .. s .. '.')
+    GameTooltip:AddLine(ScootsStats.highLevelLightForges .. ' high item level lightforged attune' .. s .. '.')
     GameTooltip:Show()
 end
 
-SS.toggleOptionsPanel = function(frame)
+ScootsStats.toggleOptionsPanel = function(frame)
     local blizzardFrames = {
         'CharacterModelFrame',
         'MagicResFrame1',
@@ -836,21 +836,21 @@ SS.toggleOptionsPanel = function(frame)
         'MagicResFrame5'
     }
 
-    if(SS.optionsOpen) then
-        SS.frames.optionsButton:SetText('Options')
-        SS.frames.options:Hide()
+    if(ScootsStats.optionsOpen) then
+        ScootsStats.frames.optionsButton:SetText('Options')
+        ScootsStats.frames.options:Hide()
         
         for _, frameName in pairs(blizzardFrames) do
             _G[frameName]:Show()
         end
         
-        SS.optionsOpen = false
+        ScootsStats.optionsOpen = false
     else
-        if(SS.frames.options == nil) then
-            SS.frames.options = CreateFrame('Frame', 'ScootsStatsOptionsPanel', _G['PaperDollFrame'])
-            SS.frames.options:SetPoint('TOPLEFT', _G['PaperDollFrame'], 'TOPLEFT', 70, -76)
-            SS.frames.options:SetWidth(224)
-            SS.frames.options:SetHeight(300)
+        if(ScootsStats.frames.options == nil) then
+            ScootsStats.frames.options = CreateFrame('Frame', 'ScootsStatsOptionsPanel', _G['PaperDollFrame'])
+            ScootsStats.frames.options:SetPoint('TOPLEFT', _G['PaperDollFrame'], 'TOPLEFT', 70, -76)
+            ScootsStats.frames.options:SetWidth(224)
+            ScootsStats.frames.options:SetHeight(300)
             
             local map = {
                 {
@@ -929,13 +929,13 @@ SS.toggleOptionsPanel = function(frame)
             local toggleHeight = 14
             
             for sectionIndex, section in ipairs(map) do
-                local headerFrame = CreateFrame('Frame', 'ScootsStatsOptionsHead-' .. sectionIndex, SS.frames.options)
-                headerFrame:SetFrameStrata(SS.strata)
-                headerFrame:SetWidth(SS.frames.options:GetWidth())
+                local headerFrame = CreateFrame('Frame', 'ScootsStatsOptionsHead-' .. sectionIndex, ScootsStats.frames.options)
+                headerFrame:SetFrameStrata(ScootsStats.strata)
+                headerFrame:SetWidth(ScootsStats.frames.options:GetWidth())
                 headerFrame:SetHeight(10)
             
                 if(sectionIndex == 1) then
-                    headerFrame:SetPoint('TOPLEFT', SS.frames.options, 'TOPLEFT', 0, -5)
+                    headerFrame:SetPoint('TOPLEFT', ScootsStats.frames.options, 'TOPLEFT', 0, -5)
                 else
                     headerFrame:SetPoint('TOPLEFT', prev, 'BOTTOMLEFT', 0, -5)
                 end
@@ -947,24 +947,24 @@ SS.toggleOptionsPanel = function(frame)
                 headerFrame.text:SetTextColor(1, 1, 1)
                 headerFrame.text:SetText(section.title)
                 
-                local holderFrame = CreateFrame('Frame', 'ScootsStatsOptionsHolder-' .. sectionIndex, SS.frames.options)
-                holderFrame:SetFrameStrata(SS.strata)
-                holderFrame:SetWidth(SS.frames.options:GetWidth())
+                local holderFrame = CreateFrame('Frame', 'ScootsStatsOptionsHolder-' .. sectionIndex, ScootsStats.frames.options)
+                holderFrame:SetFrameStrata(ScootsStats.strata)
+                holderFrame:SetWidth(ScootsStats.frames.options:GetWidth())
                 holderFrame:SetHeight(math.ceil(#section.rows / 3) * toggleHeight)
                 holderFrame:SetPoint('TOPLEFT', headerFrame, 'BOTTOMLEFT', 0, 0)
                 
                 prev = holderFrame
         
-                table.insert(SS.optionFrames, headerFrame)
-                table.insert(SS.optionFrames, holderFrame)
+                table.insert(ScootsStats.optionFrames, headerFrame)
+                table.insert(ScootsStats.optionFrames, holderFrame)
                 
                 for rowIndex, row in ipairs(section.rows) do
                     local toggle = CreateFrame('Frame', 'ScootsStatsOptionsToggle-' .. sectionIndex .. '-' .. rowIndex, holderFrame)
-                    toggle:SetFrameStrata(SS.strata)
-                    toggle:SetWidth(SS.frames.options:GetWidth() / 3)
+                    toggle:SetFrameStrata(ScootsStats.strata)
+                    toggle:SetWidth(ScootsStats.frames.options:GetWidth() / 3)
                     toggle:SetHeight(toggleHeight)
                     
-                    local leftPos = ((rowIndex - 1) % 3) * (SS.frames.options:GetWidth() / 3)
+                    local leftPos = ((rowIndex - 1) % 3) * (ScootsStats.frames.options:GetWidth() / 3)
                     local topPos = 0 - ((math.ceil(rowIndex / 3) - 1) * toggleHeight)
                     toggle:SetPoint('TOPLEFT', holderFrame, 'TOPLEFT', leftPos, topPos)
                     
@@ -977,7 +977,7 @@ SS.toggleOptionsPanel = function(frame)
                     toggle:EnableMouse(true)
                     
                     toggle.checkBorder = CreateFrame('Frame', 'ScootsStatsOptionsToggle-' .. sectionIndex .. '-' .. rowIndex .. '-Border', toggle)
-                    toggle.checkBorder:SetFrameStrata(SS.strata)
+                    toggle.checkBorder:SetFrameStrata(ScootsStats.strata)
                     toggle.checkBorder:SetSize(toggle:GetHeight(), toggle:GetHeight())
                     toggle.checkBorder:SetPoint('TOPLEFT', toggle, 'TOPLEFT', -2, -1)
                     toggle.checkBorder.texture = toggle.checkBorder:CreateTexture()
@@ -987,7 +987,7 @@ SS.toggleOptionsPanel = function(frame)
                     toggle.checkBorder:SetAlpha(0.8)
                     
                     toggle.check = CreateFrame('Frame', 'ScootsStatsOptionsToggle-' .. sectionIndex .. '-' .. rowIndex .. '-Check', toggle)
-                    toggle.check:SetFrameStrata(SS.strata)
+                    toggle.check:SetFrameStrata(ScootsStats.strata)
                     toggle.check:SetSize(toggle:GetHeight(), toggle:GetHeight())
                     toggle.check:SetPoint('TOPLEFT', toggle, 'TOPLEFT', -2, -2)
                     toggle.check.texture = toggle.check:CreateTexture()
@@ -995,7 +995,7 @@ SS.toggleOptionsPanel = function(frame)
                     toggle.check.texture:SetTexture('Interface/AchievementFrame/UI-Achievement-Criteria-Check')
                     toggle.check.texture:SetTexCoord(0, toggle:GetHeight() / 25, 0, 1)
                     
-                    if(SS.options[row[2]][row[3]] ~= true) then
+                    if(ScootsStats.options[row[2]][row[3]] ~= true) then
                         toggle.check:Hide()
                     end
                     
@@ -1009,36 +1009,36 @@ SS.toggleOptionsPanel = function(frame)
                     
                     toggle:SetScript('OnMouseDown', function(self, button)
                         if(button == 'LeftButton') then
-                            if(SS.options[row[2]][row[3]] == true) then
+                            if(ScootsStats.options[row[2]][row[3]] == true) then
                                 self.check:Hide()
-                                SS.options[row[2]][row[3]] = false
+                                ScootsStats.options[row[2]][row[3]] = false
                             else
                                 self.check:Show()
-                                SS.options[row[2]][row[3]] = true
+                                ScootsStats.options[row[2]][row[3]] = true
                             end
                             
-                            SS.updateStats()
+                            ScootsStats.updateStats()
                         end
                     end)
                     
-                    table.insert(SS.optionToggleFrames, toggle)
+                    table.insert(ScootsStats.optionToggleFrames, toggle)
                 end
             end
         end
     
-        SS.frames.optionsButton:SetText('Back')
-        SS.frames.options:Show()
+        ScootsStats.frames.optionsButton:SetText('Back')
+        ScootsStats.frames.options:Show()
         
         for _, frameName in pairs(blizzardFrames) do
             _G[frameName]:Hide()
         end
         
-        SS.optionsOpen = true
-        SS.setFrameLevels()
+        ScootsStats.optionsOpen = true
+        ScootsStats.setFrameLevels()
     end
 end
 
-function SS.loadOptions()
+function ScootsStats.loadOptions()
     local playerClasses = {}
     
     if(CustomGetClassMask == nil) then
@@ -1066,7 +1066,7 @@ function SS.loadOptions()
         end
     end
     
-    SS.options = {
+    ScootsStats.options = {
         ['misc'] = {
             ['attuning'] = true,
             ['movespeed'] = true
@@ -1126,16 +1126,16 @@ function SS.loadOptions()
         or playerClass == 'ROGUE'
         or playerClass == 'SHAMAN'
         or playerClass == 'WARRIOR') then
-            for key, _ in pairs(SS.options.melee) do
-                SS.options.melee[key] = true
+            for key, _ in pairs(ScootsStats.options.melee) do
+                ScootsStats.options.melee[key] = true
             end
         end
         
         if(playerClass == 'HUNTER'
         or playerClass == 'ROGUE'
         or playerClass == 'WARRIOR') then
-            for key, _ in pairs(SS.options.ranged) do
-                SS.options.ranged[key] = true
+            for key, _ in pairs(ScootsStats.options.ranged) do
+                ScootsStats.options.ranged[key] = true
             end
         end
         
@@ -1145,71 +1145,71 @@ function SS.loadOptions()
         or playerClass == 'PRIEST'
         or playerClass == 'SHAMAN'
         or playerClass == 'WARLOCK') then
-            for key, _ in pairs(SS.options.spells) do
-                SS.options.spells[key] = true
+            for key, _ in pairs(ScootsStats.options.spells) do
+                ScootsStats.options.spells[key] = true
             end
         end
     end
     
     if(_G['SCOOTSSTATS_OPTIONS']) then
-        for sectionKey, _ in pairs(SS.options) do
-            for key, _ in pairs(SS.options[sectionKey]) do
+        for sectionKey, _ in pairs(ScootsStats.options) do
+            for key, _ in pairs(ScootsStats.options[sectionKey]) do
                 if(_G['SCOOTSSTATS_OPTIONS'][sectionKey][key] ~= nil) then
-                    SS.options[sectionKey][key] = _G['SCOOTSSTATS_OPTIONS'][sectionKey][key]
+                    ScootsStats.options[sectionKey][key] = _G['SCOOTSSTATS_OPTIONS'][sectionKey][key]
                 end
             end
         end
     end
     
-    SS.optionsLoaded = true
+    ScootsStats.optionsLoaded = true
 end
 
-SS.onLoad = function()
-    if(CalculateAttunableAffixCount and SS.totalAccountAffixes == nil) then
-        SS.totalAccountAffixes = CalculateAttunableAffixCount()
+ScootsStats.onLoad = function()
+    if(CalculateAttunableAffixCount and ScootsStats.totalAccountAffixes == nil) then
+        ScootsStats.totalAccountAffixes = CalculateAttunableAffixCount()
     end
     
-    SS.addonLoaded = true
+    ScootsStats.addonLoaded = true
 end
 
-function SS.onLogout()
-    if(SS.optionsLoaded) then
-        _G['SCOOTSSTATS_OPTIONS'] = SS.options
+function ScootsStats.onLogout()
+    if(ScootsStats.optionsLoaded) then
+        _G['SCOOTSSTATS_OPTIONS'] = ScootsStats.options
     end
 end
 
-function SS.watchChatForAttunement(message)
+function ScootsStats.watchChatForAttunement(message)
     if(string.find(message, 'You have attuned with', 1, true)) then
-        SS.queuedUpdate = true
-        SS.queuedAttunedUpdate = true
+        ScootsStats.queuedUpdate = true
+        ScootsStats.queuedAttunedUpdate = true
         
         if(string.find(message, 'Lightforged', 1, true)) then
-            SS.queuedLightforgeUpdate = true
+            ScootsStats.queuedLightforgeUpdate = true
         end
     end
 end
 
-function SS.eventHandler(self, event, arg1)
+function ScootsStats.eventHandler(self, event, arg1)
     if(event == 'ADDON_LOADED' and arg1 == 'ScootsStats') then
-        SS.onLoad()
+        ScootsStats.onLoad()
     elseif(event == 'PLAYER_LOGOUT') then
-        SS.onLogout()
+        ScootsStats.onLogout()
     elseif(event == 'CHAT_MSG_SYSTEM') then
-        SS.watchChatForAttunement(arg1)
+        ScootsStats.watchChatForAttunement(arg1)
     else
-        SS.queuedUpdate = true
+        ScootsStats.queuedUpdate = true
     end
 end
 
-SS.frames.event:SetScript('OnEvent', SS.eventHandler)
+ScootsStats.frames.event:SetScript('OnEvent', ScootsStats.eventHandler)
 
-SS.frames.event:RegisterEvent('ADDON_LOADED')
-SS.frames.event:RegisterEvent('PLAYER_LOGOUT')
-SS.frames.event:RegisterEvent('CHAT_MSG_SYSTEM')
-SS.frames.event:RegisterEvent('PLAYER_ENTERING_WORLD')
-SS.frames.event:RegisterEvent('UNIT_INVENTORY_CHANGED')
-SS.frames.event:RegisterEvent('UNIT_AURA')
-SS.frames.event:RegisterEvent('UPDATE_SHAPESHIFT_FORM')
-SS.frames.event:RegisterEvent('PARTY_KILL')
-SS.frames.event:RegisterEvent('QUEST_TURNED_IN')
-SS.frames.event:RegisterEvent('PLAYER_AURAS_CHANGED')
+ScootsStats.frames.event:RegisterEvent('ADDON_LOADED')
+ScootsStats.frames.event:RegisterEvent('PLAYER_LOGOUT')
+ScootsStats.frames.event:RegisterEvent('CHAT_MSG_SYSTEM')
+ScootsStats.frames.event:RegisterEvent('PLAYER_ENTERING_WORLD')
+ScootsStats.frames.event:RegisterEvent('UNIT_INVENTORY_CHANGED')
+ScootsStats.frames.event:RegisterEvent('UNIT_AURA')
+ScootsStats.frames.event:RegisterEvent('UPDATE_SHAPESHIFT_FORM')
+ScootsStats.frames.event:RegisterEvent('PARTY_KILL')
+ScootsStats.frames.event:RegisterEvent('QUEST_TURNED_IN')
+ScootsStats.frames.event:RegisterEvent('PLAYER_AURAS_CHANGED')
