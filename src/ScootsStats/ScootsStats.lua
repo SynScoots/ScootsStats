@@ -635,6 +635,8 @@ ScootsStats.enterAttune = function(frame)
     
     if(attuneCount > 0) then
         GameTooltip:Show()
+    else
+        GameTooltip:Hide()
     end
 end
 
@@ -669,6 +671,7 @@ ScootsStats.enterCharacterAttunes = function(frame)
     GameTooltip:AddLine('This shows your progress towards attuning all items available for your current character.', nil, nil, nil, true)
     GameTooltip:AddLine(' ')
     GameTooltip:AddLine(tostring(ScootsStats.characterAttunes) .. ' of ' .. tostring(ScootsStats.totalCharacterAttunes) .. ' items attuned.', nil, nil, nil, true)
+    GameTooltip:Show()
 end
 
 ScootsStats.setStatForgePower = function(frame)
