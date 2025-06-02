@@ -8,6 +8,7 @@ ScootsStats.frames.master = CreateFrame('Frame', 'ScootsStatsMasterFrame', _G['C
 ScootsStats.queuedUpdate = false
 ScootsStats.queuedAttunedUpdate = false
 ScootsStats.hookedTabs = false
+ScootsStats.firstOpen = true
 
 ScootsStats.frames.event:SetScript('OnUpdate', function()
     if(ScootsStats.addonLoaded) then
@@ -569,8 +570,11 @@ ScootsStats.updateStats = function()
     ScootsStats.frames.background:SetWidth(ScootsStats.frames.master:GetWidth() + 20)
     _G['CharacterFrame']:SetWidth(ScootsStats.baseWidth + ScootsStats.frames.master:GetWidth() - 40)
     
-    HideUIPanel(_G['CharacterFrame'])
-    ShowUIPanel(_G['CharacterFrame'])
+    if(ScootsStats.firstOpen) then
+        ScootsStats.firstOpen = false
+        HideUIPanel(_G['CharacterFrame'])
+        ShowUIPanel(_G['CharacterFrame'])
+    end
 end
 
 ScootsStats.setStatAttune = function(frame)
