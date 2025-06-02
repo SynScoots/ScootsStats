@@ -567,7 +567,10 @@ ScootsStats.updateStats = function()
     ScootsStats.frames.master:SetWidth(ScootsStats.frames.scrollChild:GetWidth() + 5 + scrollWidth)
     
     ScootsStats.frames.background:SetWidth(ScootsStats.frames.master:GetWidth() + 20)
-    _G['CharacterFrame']:SetWidth(ScootsStats.baseWidth + ScootsStats.frames.master:GetWidth())
+    _G['CharacterFrame']:SetWidth(ScootsStats.baseWidth + ScootsStats.frames.master:GetWidth() - 40)
+    
+    HideUIPanel(_G['CharacterFrame'])
+    ShowUIPanel(_G['CharacterFrame'])
 end
 
 ScootsStats.setStatAttune = function(frame)
