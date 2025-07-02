@@ -1,4 +1,5 @@
 ScootsStats = {}
+ScootsStats.version = '2.2.8'
 ScootsStats.initialised = false
 ScootsStats.characterFrameOpen = false
 ScootsStats.optionsOpen = false
@@ -113,15 +114,31 @@ ScootsStats.init = function()
 	ScootsStats.frames.optionsButton:SetScript('OnClick', ScootsStats.toggleOptionsPanel)
     
     ScootsStats.frames.title = CreateFrame('Frame', 'ScootsStatsTitle', ScootsStats.frames.master)
-    ScootsStats.frames.title:SetHeight(12)
-    ScootsStats.frames.title:SetPoint('TOPLEFT', ScootsStats.frames.master, 'TOPLEFT', 5, -19)
+    ScootsStats.frames.title:SetHeight(18)
+    ScootsStats.frames.title:SetPoint('TOPLEFT', ScootsStats.frames.master, 'TOPLEFT', 5, -16)
 	ScootsStats.frames.title:SetFrameStrata(ScootsStats.strata)
+    
     ScootsStats.frames.title.text = ScootsStats.frames.title:CreateFontString(nil, 'ARTWORK')
-    ScootsStats.frames.title.text:SetFont('Fonts\\FRIZQT__.TTF', 12)
+    ScootsStats.frames.title.text:SetFont('Fonts\\FRIZQT__.TTF', 10)
     ScootsStats.frames.title.text:SetPoint('TOPLEFT', 0, 0)
     ScootsStats.frames.title.text:SetJustifyH('LEFT')
     ScootsStats.frames.title.text:SetTextColor(1, 1, 1)
     ScootsStats.frames.title.text:SetText('ScootsStats')
+    
+    ScootsStats.frames.title.versionTitle = ScootsStats.frames.title:CreateFontString(nil, 'ARTWORK')
+    ScootsStats.frames.title.versionTitle:SetFont('Fonts\\FRIZQT__.TTF', 8)
+    ScootsStats.frames.title.versionTitle:SetPoint('TOPLEFT', ScootsStats.frames.title.text, 'BOTTOMLEFT', 0, 0)
+    ScootsStats.frames.title.versionTitle:SetJustifyH('LEFT')
+    ScootsStats.frames.title.versionTitle:SetTextColor(1, 1, 1)
+    ScootsStats.frames.title.versionTitle:SetText('Version ')
+    
+    ScootsStats.frames.title.version = ScootsStats.frames.title:CreateFontString(nil, 'ARTWORK')
+    ScootsStats.frames.title.version:SetFont('Fonts\\FRIZQT__.TTF', 8)
+    ScootsStats.frames.title.version:SetPoint('TOPLEFT', ScootsStats.frames.title.versionTitle, 'TOPRIGHT', 0, 0)
+    ScootsStats.frames.title.version:SetJustifyH('LEFT')
+    ScootsStats.frames.title.version:SetTextColor(0.6, 0.98, 0.6)
+    ScootsStats.frames.title.version:SetText(ScootsStats.version)
+    
     ScootsStats.frames.title:SetWidth(ScootsStats.frames.title.text:GetStringWidth())
     
     ScootsStats.frames.background = CreateFrame('Frame', 'ScootsStatsBackground', ScootsStats.frames.master)
@@ -209,6 +226,7 @@ ScootsStats.setFrameLevels = function()
     local baseLevel = _G['PaperDollFrame']:GetFrameLevel()
     
     ScootsStats.frames.master:SetFrameLevel(baseLevel + 1)
+    _G['CharacterNameFrame']:SetFrameLevel(baseLevel + 2)
     ScootsStats.frames.scrollFrame:SetFrameLevel(baseLevel + 2)
     ScootsStats.frames.scrollChild:SetFrameLevel(baseLevel + 3)
     ScootsStats.frames.scrollBar:SetFrameLevel(baseLevel + 3)

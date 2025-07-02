@@ -1,3 +1,5 @@
+ScootsStats <span style="color: #98fb98">2.2.8</span>.
+
 ## Description ##
 
 This adds a stat panel to the right of your character panel so you don't need to switch between smaller stat panels below your character model, as well as showing a few extra stats.
