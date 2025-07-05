@@ -1,4 +1,4 @@
-ScootsStats <span style="color: #98fb98">2.2.8</span>.
+ScootsStats <span style="color: #98fb98">2.2.9</span>.
 
 ## Description ##
 

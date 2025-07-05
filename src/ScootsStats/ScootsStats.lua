@@ -1,5 +1,5 @@
 ScootsStats = {}
-ScootsStats.version = '2.2.8'
+ScootsStats.version = '2.2.9'
 ScootsStats.initialised = false
 ScootsStats.characterFrameOpen = false
 ScootsStats.optionsOpen = false
@@ -187,14 +187,15 @@ end
 
 ScootsStats.applyFixesToOtherFrames = function()
     local frames = {
-        'PaperDollFrame',
-        'PetPaperDollFrame',
-        'ReputationFrame',
-        'SkillFrame',
-        'TokenFrame'
+        ['PaperDollFrame'] = 5,
+        ['PetPaperDollFrame'] = 5,
+        ['ReputationFrame'] = 5,
+        ['SkillFrame'] = 5,
+        ['TokenFrame'] = 5,
+        
     }
     
-    for _, frameName in pairs(frames) do
+    for frameName, adjustment in pairs(frames) do
         if(_G[frameName] and _G[frameName]:IsVisible() and ScootsStats['moved' .. frameName] == nil) then
             _G[frameName]:SetParent(ScootsStats.frames.otherTabHolder)
             _G[frameName]:SetAllPoints()
@@ -204,12 +205,17 @@ ScootsStats.applyFixesToOtherFrames = function()
     end
     
     frames = {
-        'ReputationDetailFrame'
+        ['ReputationDetailFrame'] = 5,
+        ['CharacterFrameTab1'] = 6,
+        ['CharacterFrameTab2'] = 6,
+        ['CharacterFrameTab3'] = 6,
+        ['CharacterFrameTab4'] = 6,
+        ['CharacterFrameTab5'] = 6
     }
     
-    for _, frameName in pairs(frames) do
+    for frameName, adjustment in pairs(frames) do
         if(_G[frameName] and _G[frameName]:IsVisible() and ScootsStats['moved' .. frameName] == nil) then
-            _G[frameName]:SetFrameLevel(_G['PaperDollFrame']:GetFrameLevel() + 5)
+            _G[frameName]:SetFrameLevel(_G['PaperDollFrame']:GetFrameLevel() + adjustment)
             ScootsStats['moved' .. frameName] = true
         end
     end
