@@ -1,5 +1,5 @@
 ScootsStats = {}
-ScootsStats.version = '2.2.9'
+ScootsStats.version = '2.2.10'
 ScootsStats.initialised = false
 ScootsStats.characterFrameOpen = false
 ScootsStats.optionsOpen = false
@@ -199,7 +199,7 @@ ScootsStats.applyFixesToOtherFrames = function()
         if(_G[frameName] and _G[frameName]:IsVisible() and ScootsStats['moved' .. frameName] == nil) then
             _G[frameName]:SetParent(ScootsStats.frames.otherTabHolder)
             _G[frameName]:SetAllPoints()
-            _G[frameName]:SetFrameLevel(_G['CharacterFrame']:GetFrameLevel() + 5)
+            _G[frameName]:SetFrameLevel(_G['CharacterFrame']:GetFrameLevel() + adjustment)
             ScootsStats['moved' .. frameName] = true
         end
     end
@@ -232,6 +232,7 @@ ScootsStats.setFrameLevels = function()
     local baseLevel = _G['PaperDollFrame']:GetFrameLevel()
     
     ScootsStats.frames.master:SetFrameLevel(baseLevel + 1)
+    ScootsStats.frames.otherTabHolder:SetFrameLevel(baseLevel + 2)
     _G['CharacterNameFrame']:SetFrameLevel(baseLevel + 2)
     ScootsStats.frames.scrollFrame:SetFrameLevel(baseLevel + 2)
     ScootsStats.frames.scrollChild:SetFrameLevel(baseLevel + 3)
