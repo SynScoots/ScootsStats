@@ -1,5 +1,5 @@
 ScootsStats = {}
-ScootsStats.version = '2.2.10'
+ScootsStats.version = '2.2.11'
 ScootsStats.initialised = false
 ScootsStats.characterFrameOpen = false
 ScootsStats.optionsOpen = false
@@ -47,14 +47,11 @@ ScootsStats.frames.event:SetScript('OnUpdate', function()
                 if(ScootsStats.queuedUpdate == true or ScootsStats.queuedAttunedUpdate == true) then
                     ScootsStats.updateStats()
                     ScootsStats.setFrameLevels()
+                    ScootsStats.applyFixesToOtherFrames()
                     
                     ScootsStats.queuedUpdate = false
                 end
             end
-        end
-        
-        if(ScootsStats.characterFrameOpen) then
-            ScootsStats.applyFixesToOtherFrames()
         end
     end
 end)
@@ -196,11 +193,10 @@ ScootsStats.applyFixesToOtherFrames = function()
     }
     
     for frameName, adjustment in pairs(frames) do
-        if(_G[frameName] and _G[frameName]:IsVisible() and ScootsStats['moved' .. frameName] == nil) then
+        if(_G[frameName] and _G[frameName]:IsVisible()) then
             _G[frameName]:SetParent(ScootsStats.frames.otherTabHolder)
             _G[frameName]:SetAllPoints()
             _G[frameName]:SetFrameLevel(_G['CharacterFrame']:GetFrameLevel() + adjustment)
-            ScootsStats['moved' .. frameName] = true
         end
     end
     
@@ -214,9 +210,8 @@ ScootsStats.applyFixesToOtherFrames = function()
     }
     
     for frameName, adjustment in pairs(frames) do
-        if(_G[frameName] and _G[frameName]:IsVisible() and ScootsStats['moved' .. frameName] == nil) then
+        if(_G[frameName] and _G[frameName]:IsVisible()) then
             _G[frameName]:SetFrameLevel(_G['PaperDollFrame']:GetFrameLevel() + adjustment)
-            ScootsStats['moved' .. frameName] = true
         end
     end
     
