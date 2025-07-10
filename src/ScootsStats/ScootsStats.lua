@@ -1,5 +1,5 @@
 ScootsStats = {}
-ScootsStats.version = '2.2.12'
+ScootsStats.version = '2.2.13'
 ScootsStats.initialised = false
 ScootsStats.characterFrameOpen = false
 ScootsStats.optionsOpen = false
@@ -102,8 +102,8 @@ ScootsStats.init = function()
     ScootsStats.frames.scrollBar:SetPoint('BOTTOM', ScootsStats.frames.scrollDownButton, 'TOP', 0, 2)
 
     ScootsStats.frames.scrollFrame:SetScrollChild(ScootsStats.frames.scrollChild)
-    ScootsStats.frames.scrollFrame:SetPoint('TOPLEFT', ScootsStats.frames.master, 'TOPLEFT', 0, -35)
-    ScootsStats.frames.scrollFrame:SetHeight(400)
+    ScootsStats.frames.scrollFrame:SetPoint('TOPLEFT', ScootsStats.frames.master, 'TOPLEFT', 0, -36)
+    ScootsStats.frames.scrollFrame:SetHeight(399)
     
     ScootsStats.frames.optionsButton = CreateFrame('Button', 'ScootsStatsOptionsButton', ScootsStats.frames.master, 'UIPanelButtonTemplate')
 	ScootsStats.frames.optionsButton:SetSize(56, 19)
@@ -182,7 +182,6 @@ end
 
 ScootsStats.applyFixesToOtherFrames = function()
     local frames = {
-        ['PaperDollFrame'] = 5,
         ['PetPaperDollFrame'] = 5,
         ['ReputationFrame'] = 5,
         ['SkillFrame'] = 5,
