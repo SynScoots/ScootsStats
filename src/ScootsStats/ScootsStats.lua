@@ -1,5 +1,5 @@
 ScootsStats = {}
-ScootsStats.version = '2.2.11'
+ScootsStats.version = '2.2.12'
 ScootsStats.initialised = false
 ScootsStats.characterFrameOpen = false
 ScootsStats.optionsOpen = false
@@ -47,11 +47,13 @@ ScootsStats.frames.event:SetScript('OnUpdate', function()
                 if(ScootsStats.queuedUpdate == true or ScootsStats.queuedAttunedUpdate == true) then
                     ScootsStats.updateStats()
                     ScootsStats.setFrameLevels()
-                    ScootsStats.applyFixesToOtherFrames()
-                    
                     ScootsStats.queuedUpdate = false
                 end
             end
+        end
+        
+        if(ScootsStats.characterFrameOpen) then
+            ScootsStats.applyFixesToOtherFrames()
         end
     end
 end)
@@ -100,8 +102,8 @@ ScootsStats.init = function()
     ScootsStats.frames.scrollBar:SetPoint('BOTTOM', ScootsStats.frames.scrollDownButton, 'TOP', 0, 2)
 
     ScootsStats.frames.scrollFrame:SetScrollChild(ScootsStats.frames.scrollChild)
-    ScootsStats.frames.scrollFrame:SetPoint('TOPLEFT', ScootsStats.frames.master, 'TOPLEFT', 0, -34)
-    ScootsStats.frames.scrollFrame:SetHeight(403)
+    ScootsStats.frames.scrollFrame:SetPoint('TOPLEFT', ScootsStats.frames.master, 'TOPLEFT', 0, -35)
+    ScootsStats.frames.scrollFrame:SetHeight(400)
     
     ScootsStats.frames.optionsButton = CreateFrame('Button', 'ScootsStatsOptionsButton', ScootsStats.frames.master, 'UIPanelButtonTemplate')
 	ScootsStats.frames.optionsButton:SetSize(56, 19)
@@ -138,14 +140,10 @@ ScootsStats.init = function()
     
     ScootsStats.frames.title:SetWidth(ScootsStats.frames.title.text:GetStringWidth())
     
-    ScootsStats.frames.background = CreateFrame('Frame', 'ScootsStatsBackground', ScootsStats.frames.master)
-    ScootsStats.frames.background:SetPoint('TOPLEFT', ScootsStats.frames.master, 'TOPLEFT', -20, 0)
-    ScootsStats.frames.background:SetHeight(ScootsStats.frames.master:GetHeight())
-	ScootsStats.frames.background:SetFrameStrata(ScootsStats.strata)
-    ScootsStats.frames.background.texture = ScootsStats.frames.background:CreateTexture()
-    ScootsStats.frames.background.texture:SetTexture([[Interface\AddOns\ScootsStats\Textures\Frame-Flyout.blp]])
-    ScootsStats.frames.background.texture:SetPoint('TOPRIGHT', 0, -1)
-    ScootsStats.frames.background.texture:SetSize(512, 512)
+    ScootsStats.frames.background = _G['CharacterFrame']:CreateTexture(nil, 'BACKGROUND')
+    ScootsStats.frames.background:SetTexture([[Interface\AddOns\ScootsStats\Textures\Frame-Flyout.blp]])
+    ScootsStats.frames.background:SetPoint('TOPRIGHT', 6, -1)
+    ScootsStats.frames.background:SetSize(512, 512)
     
     _G['CharacterNameFrame']:SetPoint('TOPRIGHT', ScootsStats.frames.master, 'TOPLEFT', 33, -19)
     _G['CharacterNameFrame']:SetWidth(ScootsStats.baseWidth)
@@ -188,15 +186,15 @@ ScootsStats.applyFixesToOtherFrames = function()
         ['PetPaperDollFrame'] = 5,
         ['ReputationFrame'] = 5,
         ['SkillFrame'] = 5,
-        ['TokenFrame'] = 5,
-        
+        ['TokenFrame'] = 5
     }
     
     for frameName, adjustment in pairs(frames) do
-        if(_G[frameName] and _G[frameName]:IsVisible()) then
+        if(_G[frameName] and _G[frameName]:IsVisible() and ScootsStats['moved' .. frameName] == nil) then
             _G[frameName]:SetParent(ScootsStats.frames.otherTabHolder)
             _G[frameName]:SetAllPoints()
             _G[frameName]:SetFrameLevel(_G['CharacterFrame']:GetFrameLevel() + adjustment)
+            ScootsStats['moved' .. frameName] = true
         end
     end
     
@@ -228,7 +226,6 @@ ScootsStats.setFrameLevels = function()
     
     ScootsStats.frames.master:SetFrameLevel(baseLevel + 1)
     ScootsStats.frames.otherTabHolder:SetFrameLevel(baseLevel + 2)
-    _G['CharacterNameFrame']:SetFrameLevel(baseLevel + 2)
     ScootsStats.frames.scrollFrame:SetFrameLevel(baseLevel + 2)
     ScootsStats.frames.scrollChild:SetFrameLevel(baseLevel + 3)
     ScootsStats.frames.scrollBar:SetFrameLevel(baseLevel + 3)
@@ -236,7 +233,8 @@ ScootsStats.setFrameLevels = function()
     ScootsStats.frames.scrollDownButton:SetFrameLevel(baseLevel + 3)
     ScootsStats.frames.optionsButton:SetFrameLevel(baseLevel + 1)
     ScootsStats.frames.title:SetFrameLevel(baseLevel + 1)
-    ScootsStats.frames.background:SetFrameLevel(baseLevel - 1)
+    _G['CharacterNameFrame']:SetFrameLevel(baseLevel + 6)
+    _G['CharacterFrameCloseButton']:SetFrameLevel(baseLevel + 7)
     
     for _, frame in pairs(ScootsStats.sectionFrames) do
         frame:SetFrameLevel(baseLevel + 4)
@@ -587,7 +585,6 @@ ScootsStats.updateStats = function()
     
     ScootsStats.frames.master:SetWidth(ScootsStats.frames.scrollChild:GetWidth() + 5 + scrollWidth)
     
-    ScootsStats.frames.background:SetWidth(ScootsStats.frames.master:GetWidth() + 20)
     _G['CharacterFrame']:SetWidth(ScootsStats.baseWidth + ScootsStats.frames.master:GetWidth() - 40)
     
     if(ScootsStats.firstOpen) then
