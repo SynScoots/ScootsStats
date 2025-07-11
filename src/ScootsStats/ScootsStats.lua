@@ -1,5 +1,5 @@
 ScootsStats = {}
-ScootsStats.version = '2.2.13'
+ScootsStats.version = '2.2.14'
 ScootsStats.initialised = false
 ScootsStats.characterFrameOpen = false
 ScootsStats.optionsOpen = false
@@ -233,7 +233,7 @@ ScootsStats.setFrameLevels = function()
     ScootsStats.frames.optionsButton:SetFrameLevel(baseLevel + 1)
     ScootsStats.frames.title:SetFrameLevel(baseLevel + 1)
     _G['CharacterNameFrame']:SetFrameLevel(baseLevel + 6)
-    _G['CharacterFrameCloseButton']:SetFrameLevel(baseLevel + 7)
+    _G['CharacterFrameCloseButton']:SetFrameLevel(baseLevel + 10)
     
     for _, frame in pairs(ScootsStats.sectionFrames) do
         frame:SetFrameLevel(baseLevel + 4)
@@ -516,16 +516,17 @@ ScootsStats.updateStats = function()
                     end
                         
                     if(prevFrame == nil) then
-                        ScootsStats.sectionFrames[sectionKey]:SetPoint('TOPLEFT', ScootsStats.frames.scrollChild, 'TOPLEFT', 5, -5)
+                        ScootsStats.sectionFrames[sectionKey]:SetPoint('TOPLEFT', ScootsStats.frames.scrollChild, 'TOPLEFT', 5, -2)
+                        frameHeight = frameHeight + 12
                     else
-                        ScootsStats.sectionFrames[sectionKey]:SetPoint('TOPLEFT', prevFrame, 'BOTTOMLEFT', 0, -5)
+                        ScootsStats.sectionFrames[sectionKey]:SetPoint('TOPLEFT', prevFrame, 'BOTTOMLEFT', 0, -4)
+                        frameHeight = frameHeight + 14
                     end
                     
                     ScootsStats.sectionFrames[sectionKey]:Show()
                     minWidth = math.max(minWidth, ScootsStats.sectionFrames[sectionKey].text:GetWidth())
                     prevFrame = ScootsStats.sectionFrames[sectionKey]
                     pushedHeader = true
-                    frameHeight = frameHeight + 15
                 end
                 
                 if(not ScootsStats.rowFrames[rowKey]) then
