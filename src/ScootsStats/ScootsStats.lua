@@ -1,5 +1,5 @@
 ScootsStats = {}
-ScootsStats.version = '2.2.14'
+ScootsStats.version = '2.3.0'
 ScootsStats.initialised = false
 ScootsStats.characterFrameOpen = false
 ScootsStats.optionsOpen = false
@@ -10,6 +10,7 @@ ScootsStats.queuedUpdate = false
 ScootsStats.queuedAttunedUpdate = false
 ScootsStats.hookedTabs = false
 ScootsStats.firstOpen = true
+ScootsStats.prestiged = false
 
 ScootsStats.frames.event:SetScript('OnUpdate', function()
     if(ScootsStats.addonLoaded) then
@@ -22,11 +23,14 @@ ScootsStats.frames.event:SetScript('OnUpdate', function()
             and _G['CharacterFrame']:IsVisible() == 1
             and MAX_ITEMID
             and CanAttuneItemHelper
+            and IsAttunableBySomeone
             and HasAttunedAnyVariantOfItem
             and GetCustomGameDataCount
             and GetCustomGameData
             and GetItemInfoCustom
-            and HasAttunedAnyVariantEx) then
+            and HasAttunedAnyVariantEx
+            and CustomExtractItemId
+            and CMCGetMultiClassEnabled) then
                 ScootsStats.characterFrameOpen = true
                 ScootsStats.queuedUpdate = true
                 
@@ -178,6 +182,11 @@ ScootsStats.init = function()
     if(ScootsStats.totalAccountAffixes == nil) then
         ScootsStats.totalAccountAffixes = CalculateAttunableAffixCount()
     end
+    
+    if((CMCGetMultiClassEnabled() or 1) == 2) then
+        ScootsStats.prestiged = true
+        ScootsStats.attuneMastery = GetCustomGameData(29, 1500)
+    end
 end
 
 ScootsStats.applyFixesToOtherFrames = function()
@@ -292,6 +301,11 @@ ScootsStats.updateStats = function()
                     ['display'] = ScootsStats.setStatAttune,
                     ['onEnter'] = ScootsStats.enterAttune,
                     ['option'] = {'misc', 'attuning'}
+                },
+                {
+                    ['display'] = ScootsStats.setStatAttuneInv,
+                    ['onEnter'] = ScootsStats.enterAttuneInv,
+                    ['option'] = {'misc', 'attuninginv'}
                 },
                 {
                     ['display'] = ScootsStats.setStatMovementSpeed,
@@ -497,67 +511,69 @@ ScootsStats.updateStats = function()
         for rowIndex, row in ipairs(section.rows) do
             local rowKey = sectionKey .. '-' .. tostring(rowIndex)
             
-            if(ScootsStats.options[row.option[1]][row.option[2]] ~= true) then
-                if(ScootsStats.rowFrames[rowKey]) then
-                    ScootsStats.rowFrames[rowKey]:Hide()
-                end
-            else
-                if(not pushedHeader) then
-                    if(not ScootsStats.sectionFrames[sectionKey]) then
-                        ScootsStats.sectionFrames[sectionKey] = CreateFrame('Frame', 'ScootsStatsSectionHead' .. sectionKey, ScootsStats.frames.scrollChild)
-                        ScootsStats.sectionFrames[sectionKey]:SetHeight(10)
-                        ScootsStats.sectionFrames[sectionKey]:SetFrameStrata(ScootsStats.strata)
-                        ScootsStats.sectionFrames[sectionKey].text = ScootsStats.sectionFrames[sectionKey]:CreateFontString(nil, 'ARTWORK')
-                        ScootsStats.sectionFrames[sectionKey].text:SetFont('Fonts\\FRIZQT__.TTF', 10)
-                        ScootsStats.sectionFrames[sectionKey].text:SetPoint('CENTER', 0, 0)
-                        ScootsStats.sectionFrames[sectionKey].text:SetJustifyH('CENTER')
-                        ScootsStats.sectionFrames[sectionKey].text:SetTextColor(1, 1, 1)
-                        ScootsStats.sectionFrames[sectionKey].text:SetText(section.title)
+            if(row.option[2] ~= 'attuninginv' or (ScootsStats.prestiged == true and ScootsStats.attuneMastery > 0)) then
+                if(ScootsStats.options[row.option[1]][row.option[2]] ~= true) then
+                    if(ScootsStats.rowFrames[rowKey]) then
+                        ScootsStats.rowFrames[rowKey]:Hide()
                     end
+                else
+                    if(not pushedHeader) then
+                        if(not ScootsStats.sectionFrames[sectionKey]) then
+                            ScootsStats.sectionFrames[sectionKey] = CreateFrame('Frame', 'ScootsStatsSectionHead' .. sectionKey, ScootsStats.frames.scrollChild)
+                            ScootsStats.sectionFrames[sectionKey]:SetHeight(10)
+                            ScootsStats.sectionFrames[sectionKey]:SetFrameStrata(ScootsStats.strata)
+                            ScootsStats.sectionFrames[sectionKey].text = ScootsStats.sectionFrames[sectionKey]:CreateFontString(nil, 'ARTWORK')
+                            ScootsStats.sectionFrames[sectionKey].text:SetFont('Fonts\\FRIZQT__.TTF', 10)
+                            ScootsStats.sectionFrames[sectionKey].text:SetPoint('CENTER', 0, 0)
+                            ScootsStats.sectionFrames[sectionKey].text:SetJustifyH('CENTER')
+                            ScootsStats.sectionFrames[sectionKey].text:SetTextColor(1, 1, 1)
+                            ScootsStats.sectionFrames[sectionKey].text:SetText(section.title)
+                        end
+                            
+                        if(prevFrame == nil) then
+                            ScootsStats.sectionFrames[sectionKey]:SetPoint('TOPLEFT', ScootsStats.frames.scrollChild, 'TOPLEFT', 5, -2)
+                            frameHeight = frameHeight + 12
+                        else
+                            ScootsStats.sectionFrames[sectionKey]:SetPoint('TOPLEFT', prevFrame, 'BOTTOMLEFT', 0, -4)
+                            frameHeight = frameHeight + 14
+                        end
                         
-                    if(prevFrame == nil) then
-                        ScootsStats.sectionFrames[sectionKey]:SetPoint('TOPLEFT', ScootsStats.frames.scrollChild, 'TOPLEFT', 5, -2)
-                        frameHeight = frameHeight + 12
-                    else
-                        ScootsStats.sectionFrames[sectionKey]:SetPoint('TOPLEFT', prevFrame, 'BOTTOMLEFT', 0, -4)
-                        frameHeight = frameHeight + 14
+                        ScootsStats.sectionFrames[sectionKey]:Show()
+                        minWidth = math.max(minWidth, ScootsStats.sectionFrames[sectionKey].text:GetWidth())
+                        prevFrame = ScootsStats.sectionFrames[sectionKey]
+                        pushedHeader = true
                     end
                     
-                    ScootsStats.sectionFrames[sectionKey]:Show()
-                    minWidth = math.max(minWidth, ScootsStats.sectionFrames[sectionKey].text:GetWidth())
-                    prevFrame = ScootsStats.sectionFrames[sectionKey]
-                    pushedHeader = true
-                end
-                
-                if(not ScootsStats.rowFrames[rowKey]) then
-                    ScootsStats.rowFrames[rowKey] = CreateFrame('Frame', 'ScootsStatsRow' .. rowKey, ScootsStats.frames.scrollChild, 'StatFrameTemplate')
-                    ScootsStats.rowFrames[rowKey]:SetHeight(10)
-                    ScootsStats.rowFrames[rowKey]:SetFrameStrata(ScootsStats.strata)
-                    
-                    if(row.onEnter) then
-                        ScootsStats.rowFrames[rowKey]:SetScript('OnEnter', row.onEnter)
+                    if(not ScootsStats.rowFrames[rowKey]) then
+                        ScootsStats.rowFrames[rowKey] = CreateFrame('Frame', 'ScootsStatsRow' .. rowKey, ScootsStats.frames.scrollChild, 'StatFrameTemplate')
+                        ScootsStats.rowFrames[rowKey]:SetHeight(10)
+                        ScootsStats.rowFrames[rowKey]:SetFrameStrata(ScootsStats.strata)
+                        
+                        if(row.onEnter) then
+                            ScootsStats.rowFrames[rowKey]:SetScript('OnEnter', row.onEnter)
+                        end
+                        
+                        if(row.onUpdate) then
+                            ScootsStats.rowFrames[rowKey]:SetScript('OnUpdate', row.onUpdate)
+                        end
                     end
                     
-                    if(row.onUpdate) then
-                        ScootsStats.rowFrames[rowKey]:SetScript('OnUpdate', row.onUpdate)
+                    ScootsStats.rowFrames[rowKey]:Show()
+                    row.display(ScootsStats.rowFrames[rowKey], row.argument)
+                    
+                    ScootsStats.rowFrames[rowKey]:SetPoint('TOPLEFT', prevFrame, 'BOTTOMLEFT', 0, -1)
+                    prevFrame = ScootsStats.rowFrames[rowKey]
+                    frameHeight = frameHeight + 10 + 1
+                    
+                    local labelWidth = _G[ScootsStats.rowFrames[rowKey]:GetName() .. 'Label']:GetWidth()
+                    
+                    local dataWidth = _G[ScootsStats.rowFrames[rowKey]:GetName() .. 'StatText']:GetWidth()
+                    if(row.option[1] == 'misc' and row.option[2] == 'movespeed') then
+                        dataWidth = math.max(dataWidth, 30)
                     end
+                    
+                    minWidth = math.max(minWidth, labelWidth + dataWidth + 10)
                 end
-                
-                ScootsStats.rowFrames[rowKey]:Show()
-                row.display(ScootsStats.rowFrames[rowKey], row.argument)
-                
-                ScootsStats.rowFrames[rowKey]:SetPoint('TOPLEFT', prevFrame, 'BOTTOMLEFT', 0, -1)
-                prevFrame = ScootsStats.rowFrames[rowKey]
-                frameHeight = frameHeight + 10 + 1
-				
-				local labelWidth = _G[ScootsStats.rowFrames[rowKey]:GetName() .. 'Label']:GetWidth()
-                
-				local dataWidth = _G[ScootsStats.rowFrames[rowKey]:GetName() .. 'StatText']:GetWidth()
-                if(row.option[1] == 'misc' and row.option[2] == 'movespeed') then
-                    dataWidth = math.max(dataWidth, 30)
-                end
-                
-                minWidth = math.max(minWidth, labelWidth + dataWidth + 10)
             end
         end
     end
@@ -602,11 +618,11 @@ ScootsStats.setStatAttune = function(frame)
         for _, slotId in pairs(ScootsStats.slotIds) do
             local itemId = GetInventoryItemID('player', slotId)
             
-            if(itemId) then
+            if(itemId and CanAttuneItemHelper(itemId) >= 1) then
                 local itemLink = GetInventoryItemLink('player', slotId)
                 local itemProgress = GetItemLinkAttuneProgress(itemLink)
                 
-                if(CanAttuneItemHelper(itemId) >= 1 and itemProgress < 100) then
+                if(itemProgress < 100) then
                     attuneCount = attuneCount + 1
                     attuneProgress = attuneProgress + itemProgress
                 end
@@ -614,15 +630,20 @@ ScootsStats.setStatAttune = function(frame)
         end
     end
     
+    local label = 'Attuning'
+    if(ScootsStats.prestiged) then
+        label = label .. ' (Equip)'
+    end
+    
     if(attuneCount == 0) then
-        PaperDollFrame_SetLabelAndText(frame, 'Attuning', '0 items')
+        PaperDollFrame_SetLabelAndText(frame, label, '0 items')
     else
         local s = 's'
         if(attuneCount == 1) then
             s = ''
         end
         
-        PaperDollFrame_SetLabelAndText(frame, 'Attuning', attuneCount .. ' item' .. s .. ' (' .. string.format('%d', attuneProgress / attuneCount) .. '%)')
+        PaperDollFrame_SetLabelAndText(frame, label, attuneCount .. ' item' .. s .. ' (' .. string.format('%d', attuneProgress / attuneCount) .. '%)')
     end
 end
 
@@ -635,11 +656,11 @@ ScootsStats.enterAttune = function(frame)
         for _, slotId in ipairs(ScootsStats.slotIds) do
             local itemId = GetInventoryItemID('player', slotId)
             
-            if(itemId) then
+            if(itemId and CanAttuneItemHelper(itemId) >= 1) then
                 local itemLink = GetInventoryItemLink('player', slotId)
                 local itemProgress = GetItemLinkAttuneProgress(itemLink)
                 
-                if(CanAttuneItemHelper(itemId) >= 1 and itemProgress < 100) then
+                if(itemProgress < 100) then
                     GameTooltip:AddDoubleLine(
                         select(1, GetItemInfo(itemId)),
                         string.format('%.2f', itemProgress) .. '%',
@@ -657,22 +678,73 @@ ScootsStats.enterAttune = function(frame)
         end
     end
     
-    if(attuneCount > 0) then
-        GameTooltip:Show()
-    else
-        GameTooltip:Hide()
+    if(attuneCount == 0) then
+        GameTooltip:AddLine('Not currently attuning any equipped items.', nil, nil, nil, true)
     end
+    
+    GameTooltip:Show()
+end
+
+ScootsStats.setStatAttuneInv = function(frame)
+    local attuneCount = 0
+    local attuneProgress = 0
+    
+    if(CustomExtractItemId and GetItemLinkAttuneProgress and CanAttuneItemHelper) then
+        for bagIndex = 0, 4 do
+            local bagSlots = GetContainerNumSlots(bagIndex)
+            
+            for slotIndex = 1, bagSlots do
+                local itemLink = select(7, GetContainerItemInfo(bagIndex, slotIndex))
+                local itemId = CustomExtractItemId(itemLink)
+    
+                if(itemId) then
+                    if(CanAttuneItemHelper(itemId) >= 1 or ((IsAttunableBySomeone(itemId) or 0) ~= 0 and ScootsStats.itemIsNotBound(itemLink))) then
+                        local itemProgress = GetItemLinkAttuneProgress(itemLink)
+                        
+                        if(itemProgress < 100) then
+                            attuneCount = attuneCount + 1
+                            attuneProgress = attuneProgress + itemProgress
+                        end
+                    end
+                end
+            end
+        end
+    end
+    
+    local label = 'Attuning'
+    if(ScootsStats.prestiged) then
+        label = label .. ' (Inv.)'
+    end
+    
+    if(attuneCount == 0) then
+        PaperDollFrame_SetLabelAndText(frame, label, '0 items')
+    else
+        local s = 's'
+        if(attuneCount == 1) then
+            s = ''
+        end
+        
+        PaperDollFrame_SetLabelAndText(frame, label, attuneCount .. ' item' .. s .. ' (' .. string.format('%d', attuneProgress / attuneCount) .. '%)')
+    end
+end
+
+ScootsStats.enterAttuneInv = function(frame)
+    GameTooltip:SetOwner(frame, 'ANCHOR_RIGHT')
+    GameTooltip:SetText('Inventory Attunements', HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b)
+    GameTooltip:AddLine('Attuning equipment in your inventory at ' .. string.format('%.2f', ScootsStats.attuneMastery) .. '% effectiveness.', nil, nil, nil, true)
+    
+    GameTooltip:Show()
 end
 
 ScootsStats.setStatMovementSpeed = function(frame)
     if(ScootsStats.characterFrameOpen) then
-        PaperDollFrame_SetLabelAndText(frame, 'Run Speed', string.format('%d', (GetUnitSpeed('Player') / 7) * 100) .. '%')
+        PaperDollFrame_SetLabelAndText(frame, 'Current Speed', string.format('%d', (GetUnitSpeed('Player') / 7) * 100) .. '%')
     end
 end
 
 ScootsStats.enterMovementSpeed = function(frame)
     GameTooltip:SetOwner(frame, 'ANCHOR_RIGHT')
-    GameTooltip:SetText('Run Speed', HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b)
+    GameTooltip:SetText('Current Speed', HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b)
     GameTooltip:AddLine('Shows the speed you are currently moving at.', nil, nil, nil, true)
     GameTooltip:Show()
 end
@@ -831,7 +903,7 @@ ScootsStats.setStatBonusExp = function(frame)
         ScootsStats.countAttunes()
     end
 
-    PaperDollFrame_SetLabelAndText(frame, 'Bonus Exp.', string.format('%.2f', ScootsStats.bonusExpEffect) .. '%')
+    PaperDollFrame_SetLabelAndText(frame, 'Attune Mastery', string.format('%.2f', ScootsStats.bonusExpEffect) .. '%')
 end
 
 ScootsStats.enterBonusExp = function(frame)
@@ -840,10 +912,11 @@ ScootsStats.enterBonusExp = function(frame)
     end
     
     GameTooltip:SetOwner(frame, 'ANCHOR_RIGHT')
-    GameTooltip:SetText('Bonus Experience', HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b)
-    GameTooltip:AddLine('This shows how much extra experience your attuning items will gain after prestige.', nil, nil, nil, true)
+    GameTooltip:SetText('Attune Mastery', HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b)
+    GameTooltip:AddLine('After prestige, you will be able to attune items in your inventory at this this effectiveness.', nil, nil, nil, true)
     GameTooltip:AddLine(' ')
     GameTooltip:AddLine('Increased by attuning lightforged items with an item level above 200.', nil, nil, nil, true)
+    GameTooltip:AddLine('Higher item levels yield higher effect.', nil, nil, nil, true)
     GameTooltip:AddLine(' ')
     local s = 's'
     if(ScootsStats.highLevelLightForges == 1) then
@@ -851,6 +924,35 @@ ScootsStats.enterBonusExp = function(frame)
     end
     GameTooltip:AddLine(ScootsStats.highLevelLightForges .. ' high item level lightforged attune' .. s .. '.')
     GameTooltip:Show()
+end
+
+ScootsStats.itemIsNotBound = function(itemLink)
+    if(not itemLink) then
+        return false
+    end
+    
+    if(ScootsStats.frames.tooltip == nil) then
+        ScootsStats.frames.tooltip = CreateFrame('GameTooltip', 'ScootsStats-Tooltip', UIParent, 'GameTooltipTemplate')
+        ScootsStats.frames.tooltip:Hide()
+    end
+    
+    ScootsStats.frames.tooltip:SetOwner(UIParent)
+    ScootsStats.frames.tooltip:ClearLines()
+    ScootsStats.frames.tooltip:SetHyperlink(itemLink)
+    
+    for _, line in ipairs({ScootsStats.frames.tooltip:GetRegions()}) do
+        if(line:IsObjectType('FontString')) then
+            local text = line:GetText()
+            
+            if(text == ITEM_SOULBOUND) then
+                ScootsStats.frames.tooltip:Hide()
+                return false
+            end
+        end
+    end
+    
+    ScootsStats.frames.tooltip:Hide()
+    return true
 end
 
 ScootsStats.toggleOptionsPanel = function(frame)
@@ -883,8 +985,9 @@ ScootsStats.toggleOptionsPanel = function(frame)
                 {
                     ['title'] = 'Miscellaneous',
                     ['rows'] = {
-                        {'Attuning', 'misc', 'attuning'},
-                        {'Run Speed', 'misc', 'movespeed'}
+                        {'Attune (Equip)', 'misc', 'attuning'},
+                        {'Attune (Inv.)', 'misc', 'attuninginv', ScootsStats.prestiged == true and ScootsStats.attuneMastery > 0},
+                        {'Current Speed', 'misc', 'movespeed'}
                     }
                 },
                 {
@@ -947,7 +1050,7 @@ ScootsStats.toggleOptionsPanel = function(frame)
                         {'Forge Power', 'prestige', 'forgepower'},
                         {'Loot Coercion', 'prestige', 'lootcoercion'},
                         {'Affix Coercion', 'prestige', 'affixcoercion'},
-                        {'Bonus Exp.', 'prestige', 'bonusexp'}
+                        {'Attune Mastery', 'prestige', 'bonusexp'}
                     }
                 }
             }
@@ -985,70 +1088,74 @@ ScootsStats.toggleOptionsPanel = function(frame)
                 table.insert(ScootsStats.optionFrames, headerFrame)
                 table.insert(ScootsStats.optionFrames, holderFrame)
                 
+                local insertedRowIndex = 0
                 for rowIndex, row in ipairs(section.rows) do
-                    local toggle = CreateFrame('Frame', 'ScootsStatsOptionsToggle-' .. sectionIndex .. '-' .. rowIndex, holderFrame)
-                    toggle:SetFrameStrata(ScootsStats.strata)
-                    toggle:SetWidth(ScootsStats.frames.options:GetWidth() / 3)
-                    toggle:SetHeight(toggleHeight)
-                    
-                    local leftPos = ((rowIndex - 1) % 3) * (ScootsStats.frames.options:GetWidth() / 3)
-                    local topPos = 0 - ((math.ceil(rowIndex / 3) - 1) * toggleHeight)
-                    toggle:SetPoint('TOPLEFT', holderFrame, 'TOPLEFT', leftPos, topPos)
-                    
-                    toggle.text = toggle:CreateFontString(nil, 'ARTWORK')
-                    toggle.text:SetFont('Fonts\\FRIZQT__.TTF', 8)
-                    toggle.text:SetPoint('LEFT', toggleHeight, 0)
-                    toggle.text:SetJustifyH('LEFT')
-                    toggle.text:SetTextColor(1, 1, 1)
-                    toggle.text:SetText(row[1])
-                    toggle:EnableMouse(true)
-                    
-                    toggle.checkBorder = CreateFrame('Frame', 'ScootsStatsOptionsToggle-' .. sectionIndex .. '-' .. rowIndex .. '-Border', toggle)
-                    toggle.checkBorder:SetFrameStrata(ScootsStats.strata)
-                    toggle.checkBorder:SetSize(toggle:GetHeight(), toggle:GetHeight())
-                    toggle.checkBorder:SetPoint('TOPLEFT', toggle, 'TOPLEFT', -2, -1)
-                    toggle.checkBorder.texture = toggle.checkBorder:CreateTexture()
-                    toggle.checkBorder.texture:SetAllPoints()
-                    toggle.checkBorder.texture:SetTexture('Interface/AchievementFrame/UI-Achievement-Progressive-IconBorder')
-                    toggle.checkBorder.texture:SetTexCoord(0, toggle:GetHeight() / 25, 0, toggle:GetHeight() / 25)
-                    toggle.checkBorder:SetAlpha(0.8)
-                    
-                    toggle.check = CreateFrame('Frame', 'ScootsStatsOptionsToggle-' .. sectionIndex .. '-' .. rowIndex .. '-Check', toggle)
-                    toggle.check:SetFrameStrata(ScootsStats.strata)
-                    toggle.check:SetSize(toggle:GetHeight(), toggle:GetHeight())
-                    toggle.check:SetPoint('TOPLEFT', toggle, 'TOPLEFT', -2, -2)
-                    toggle.check.texture = toggle.check:CreateTexture()
-                    toggle.check.texture:SetAllPoints()
-                    toggle.check.texture:SetTexture('Interface/AchievementFrame/UI-Achievement-Criteria-Check')
-                    toggle.check.texture:SetTexCoord(0, toggle:GetHeight() / 25, 0, 1)
-                    
-                    if(ScootsStats.options[row[2]][row[3]] ~= true) then
-                        toggle.check:Hide()
-                    end
-                    
-                    toggle:SetScript('OnEnter', function(self)
-                        self.checkBorder:SetAlpha(1)
-                    end)
-                    
-                    toggle:SetScript('OnLeave', function(self)
-                        self.checkBorder:SetAlpha(0.8)
-                    end)
-                    
-                    toggle:SetScript('OnMouseDown', function(self, button)
-                        if(button == 'LeftButton') then
-                            if(ScootsStats.options[row[2]][row[3]] == true) then
-                                self.check:Hide()
-                                ScootsStats.options[row[2]][row[3]] = false
-                            else
-                                self.check:Show()
-                                ScootsStats.options[row[2]][row[3]] = true
-                            end
-                            
-                            ScootsStats.updateStats()
+                    if(row[4] == nil or row[4] == true) then
+                        insertedRowIndex = insertedRowIndex + 1
+                        local toggle = CreateFrame('Frame', 'ScootsStatsOptionsToggle-' .. sectionIndex .. '-' .. rowIndex, holderFrame)
+                        toggle:SetFrameStrata(ScootsStats.strata)
+                        toggle:SetWidth(ScootsStats.frames.options:GetWidth() / 3)
+                        toggle:SetHeight(toggleHeight)
+                        
+                        local leftPos = ((insertedRowIndex - 1) % 3) * (ScootsStats.frames.options:GetWidth() / 3)
+                        local topPos = 0 - ((math.ceil(insertedRowIndex / 3) - 1) * toggleHeight)
+                        toggle:SetPoint('TOPLEFT', holderFrame, 'TOPLEFT', leftPos, topPos)
+                        
+                        toggle.text = toggle:CreateFontString(nil, 'ARTWORK')
+                        toggle.text:SetFont('Fonts\\FRIZQT__.TTF', 8)
+                        toggle.text:SetPoint('LEFT', toggleHeight, 0)
+                        toggle.text:SetJustifyH('LEFT')
+                        toggle.text:SetTextColor(1, 1, 1)
+                        toggle.text:SetText(row[1])
+                        toggle:EnableMouse(true)
+                        
+                        toggle.checkBorder = CreateFrame('Frame', 'ScootsStatsOptionsToggle-' .. sectionIndex .. '-' .. rowIndex .. '-Border', toggle)
+                        toggle.checkBorder:SetFrameStrata(ScootsStats.strata)
+                        toggle.checkBorder:SetSize(toggle:GetHeight(), toggle:GetHeight())
+                        toggle.checkBorder:SetPoint('TOPLEFT', toggle, 'TOPLEFT', -2, -1)
+                        toggle.checkBorder.texture = toggle.checkBorder:CreateTexture()
+                        toggle.checkBorder.texture:SetAllPoints()
+                        toggle.checkBorder.texture:SetTexture('Interface/AchievementFrame/UI-Achievement-Progressive-IconBorder')
+                        toggle.checkBorder.texture:SetTexCoord(0, toggle:GetHeight() / 25, 0, toggle:GetHeight() / 25)
+                        toggle.checkBorder:SetAlpha(0.8)
+                        
+                        toggle.check = CreateFrame('Frame', 'ScootsStatsOptionsToggle-' .. sectionIndex .. '-' .. rowIndex .. '-Check', toggle)
+                        toggle.check:SetFrameStrata(ScootsStats.strata)
+                        toggle.check:SetSize(toggle:GetHeight(), toggle:GetHeight())
+                        toggle.check:SetPoint('TOPLEFT', toggle, 'TOPLEFT', -2, -2)
+                        toggle.check.texture = toggle.check:CreateTexture()
+                        toggle.check.texture:SetAllPoints()
+                        toggle.check.texture:SetTexture('Interface/AchievementFrame/UI-Achievement-Criteria-Check')
+                        toggle.check.texture:SetTexCoord(0, toggle:GetHeight() / 25, 0, 1)
+                        
+                        if(ScootsStats.options[row[2]][row[3]] ~= true) then
+                            toggle.check:Hide()
                         end
-                    end)
-                    
-                    table.insert(ScootsStats.optionToggleFrames, toggle)
+                        
+                        toggle:SetScript('OnEnter', function(self)
+                            self.checkBorder:SetAlpha(1)
+                        end)
+                        
+                        toggle:SetScript('OnLeave', function(self)
+                            self.checkBorder:SetAlpha(0.8)
+                        end)
+                        
+                        toggle:SetScript('OnMouseDown', function(self, button)
+                            if(button == 'LeftButton') then
+                                if(ScootsStats.options[row[2]][row[3]] == true) then
+                                    self.check:Hide()
+                                    ScootsStats.options[row[2]][row[3]] = false
+                                else
+                                    self.check:Show()
+                                    ScootsStats.options[row[2]][row[3]] = true
+                                end
+                                
+                                ScootsStats.updateStats()
+                            end
+                        end)
+                        
+                        table.insert(ScootsStats.optionToggleFrames, toggle)
+                    end
                 end
             end
         end
@@ -1096,6 +1203,7 @@ function ScootsStats.loadOptions()
     ScootsStats.options = {
         ['misc'] = {
             ['attuning'] = true,
+            ['attuninginv'] = true,
             ['movespeed'] = true
         },
         ['base'] = {
