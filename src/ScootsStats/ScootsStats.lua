@@ -1,5 +1,5 @@
 ScootsStats = {}
-ScootsStats.version = '2.4.0'
+ScootsStats.version = '2.4.1'
 ScootsStats.initialised = false
 ScootsStats.characterFrameOpen = false
 ScootsStats.optionsOpen = false
@@ -1379,7 +1379,7 @@ ScootsStats.inventoryFrames = {
     ['CharacterTrinket1Slot'] = {'INVTYPE_TRINKET'},
     ['CharacterMainHandSlot'] = {'INVTYPE_WEAPON', 'INVTYPE_2HWEAPON', 'INVTYPE_WEAPONMAINHAND'},
     ['CharacterSecondaryHandSlot'] = {'INVTYPE_SHIELD', 'INVTYPE_HOLDABLE', 'INVTYPE_WEAPONOFFHAND'},
-    ['CharacterRangedSlot'] = {'INVTYPE_RANGED', 'INVTYPE_RELIC'},
+    ['CharacterRangedSlot'] = {'INVTYPE_RANGED', 'INVTYPE_RANGEDRIGHT', 'INVTYPE_RELIC'},
 }
 
 ScootsStats.slotIdMap = {
@@ -1446,11 +1446,6 @@ function ScootsStats.showFlyout(slot)
         ScootsStats.frames.flyoutInner:SetPoint('TOPLEFT', ScootsStats.frames.flyout, 'TOPLEFT', slot:GetWidth(), 0)
     end
     
-    for _, itemFrame in pairs(ScootsStats.frames.flyoutItems) do
-        itemFrame:Hide()
-        itemFrame:SetParent(UIParent)
-    end
-    
     ScootsStats.currentFlyout = slot:GetName()
     if(ScootsStats.updateFlyoutContent()) then
         ScootsStats.frames.flyout:Show()
@@ -1459,6 +1454,11 @@ end
 
 function ScootsStats.updateFlyoutContent()
     local items = ScootsStats.getFlyoutItems()
+    
+    for _, itemFrame in pairs(ScootsStats.frames.flyoutItems) do
+        itemFrame:Hide()
+        itemFrame:SetParent(UIParent)
+    end
     
     if(#items.toAttune == 0 and #items.attuned == 0 and #items.noAttune == 0) then
         ScootsStats.hideFlyout()
