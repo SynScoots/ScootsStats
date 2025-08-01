@@ -1,5 +1,5 @@
 ScootsStats = {}
-ScootsStats.version = '2.3.0'
+ScootsStats.version = '2.4.0'
 ScootsStats.initialised = false
 ScootsStats.characterFrameOpen = false
 ScootsStats.optionsOpen = false
@@ -186,6 +186,10 @@ ScootsStats.init = function()
     if((CMCGetMultiClassEnabled() or 1) == 2) then
         ScootsStats.prestiged = true
         ScootsStats.attuneMastery = GetCustomGameData(29, 1500)
+    end
+
+    for slot, _ in pairs(ScootsStats.inventoryFrames) do
+        _G[slot]:SetScript('OnUpdate', ScootsStats.flyoutWatcher)
     end
 end
 
@@ -1173,11 +1177,11 @@ ScootsStats.toggleOptionsPanel = function(frame)
 end
 
 function ScootsStats.loadOptions()
-    local playerClasses = {}
+    ScootsStats.playerClasses = {}
     
     if(CustomGetClassMask == nil) then
         local _, playerClass = UnitClass('player')
-        table.insert(playerClasses, strupper(playerClass))
+        table.insert(ScootsStats.playerClasses, strupper(playerClass))
     else
         local mask = CustomGetClassMask()
         local classList = {
@@ -1195,7 +1199,7 @@ function ScootsStats.loadOptions()
         
         for className, classId in pairs(classList) do
             if(bit.band(mask, bit.lshift(1, classId - 1)) > 0) then
-                table.insert(playerClasses, className)
+                table.insert(ScootsStats.playerClasses, className)
             end
         end
     end
@@ -1253,7 +1257,7 @@ function ScootsStats.loadOptions()
         }
     }
     
-    for _, playerClass in pairs(playerClasses) do
+    for _, playerClass in pairs(ScootsStats.playerClasses) do
         if(playerClass == 'DEATHKNIGHT'
         or playerClass == 'DRUID'
         or playerClass == 'HUNTER'
@@ -1333,6 +1337,10 @@ function ScootsStats.eventHandler(self, event, arg1)
         ScootsStats.watchChatForAttunement(arg1)
     else
         ScootsStats.queuedUpdate = true
+        
+        if(event == 'PLAYER_EQUIPMENT_CHANGED' and ScootsStats.currentFlyout ~= nil) then
+            ScootsStats.updateFlyoutContent()
+        end
     end
 end
 
@@ -1348,3 +1356,740 @@ ScootsStats.frames.event:RegisterEvent('UPDATE_SHAPESHIFT_FORM')
 ScootsStats.frames.event:RegisterEvent('PARTY_KILL')
 ScootsStats.frames.event:RegisterEvent('QUEST_TURNED_IN')
 ScootsStats.frames.event:RegisterEvent('PLAYER_AURAS_CHANGED')
+ScootsStats.frames.event:RegisterEvent('PLAYER_EQUIPMENT_CHANGED')
+
+-- ########## --
+
+ScootsStats.inventoryFrames = {
+    ['CharacterHeadSlot'] = {'INVTYPE_HEAD'},
+    ['CharacterNeckSlot'] = {'INVTYPE_NECK'},
+    ['CharacterShoulderSlot'] = {'INVTYPE_SHOULDER'},
+    ['CharacterBackSlot'] = {'INVTYPE_CLOAK'},
+    ['CharacterChestSlot'] = {'INVTYPE_CHEST', 'INVTYPE_ROBE'},
+    ['CharacterShirtSlot'] = {'INVTYPE_BODY'},
+    ['CharacterTabardSlot'] = {'INVTYPE_TABARD'},
+    ['CharacterWristSlot'] = {'INVTYPE_WRIST'},
+    ['CharacterHandsSlot'] = {'INVTYPE_HAND'},
+    ['CharacterWaistSlot'] = {'INVTYPE_WAIST'},
+    ['CharacterLegsSlot'] = {'INVTYPE_LEGS'},
+    ['CharacterFeetSlot'] = {'INVTYPE_FEET'},
+    ['CharacterFinger0Slot'] = {'INVTYPE_FINGER'},
+    ['CharacterFinger1Slot'] = {'INVTYPE_FINGER'},
+    ['CharacterTrinket0Slot'] = {'INVTYPE_TRINKET'},
+    ['CharacterTrinket1Slot'] = {'INVTYPE_TRINKET'},
+    ['CharacterMainHandSlot'] = {'INVTYPE_WEAPON', 'INVTYPE_2HWEAPON', 'INVTYPE_WEAPONMAINHAND'},
+    ['CharacterSecondaryHandSlot'] = {'INVTYPE_SHIELD', 'INVTYPE_HOLDABLE', 'INVTYPE_WEAPONOFFHAND'},
+    ['CharacterRangedSlot'] = {'INVTYPE_RANGED', 'INVTYPE_RELIC'},
+}
+
+ScootsStats.slotIdMap = {
+    ['CharacterHeadSlot'] = 1,
+    ['CharacterNeckSlot'] = 2,
+    ['CharacterShoulderSlot'] = 3,
+    ['CharacterBackSlot'] = 15,
+    ['CharacterChestSlot'] = 5,
+    ['CharacterShirtSlot'] = 4,
+    ['CharacterTabardSlot'] = 19,
+    ['CharacterWristSlot'] = 9,
+    ['CharacterHandsSlot'] = 10,
+    ['CharacterWaistSlot'] = 6,
+    ['CharacterLegsSlot'] = 7,
+    ['CharacterFeetSlot'] = 8,
+    ['CharacterFinger0Slot'] = 11,
+    ['CharacterFinger1Slot'] = 12,
+    ['CharacterTrinket0Slot'] = 13,
+    ['CharacterTrinket1Slot'] = 14,
+    ['CharacterMainHandSlot'] = 16,
+    ['CharacterSecondaryHandSlot'] = 17,
+    ['CharacterRangedSlot'] = 18,
+}
+
+PaperDollFrameItemFlyout_Show = function() end
+PaperDollFrameItemFlyout_OnShow = function() end
+PaperDollFrameItemFlyout_Hide = function() end
+PaperDollFrameItemFlyout_OnHide = function() end
+PaperDollFrameItemFlyout_OnUpdate = function() end
+
+function ScootsStats.flyoutWatcher(slot)
+    if(IsAltKeyDown() and slot:IsMouseOver() and ScootsStats.currentFlyout ~= slot:GetName()) then
+        ScootsStats.showFlyout(slot)
+        slot:SetFrameStrata('HIGH')
+    elseif(not IsAltKeyDown() and ScootsStats.currentFlyout ~= nil) then
+        ScootsStats.hideFlyout()
+        slot:SetFrameStrata('MEDIUM')
+    elseif(slot:GetFrameStrata() == 'HIGH' and ScootsStats.currentFlyout ~= slot:GetName()) then
+        slot:SetFrameStrata('MEDIUM')
+    end
+end
+
+function ScootsStats.hideFlyout()
+    ScootsStats.currentFlyout = nil
+    ScootsStats.frames.flyout:Hide()
+end
+
+function ScootsStats.showFlyout(slot)
+    if(ScootsStats.frames.flyout == nil) then
+        ScootsStats.createFlyout()
+    end
+    
+    ScootsStats.frames.flyout:SetParent(slot)
+    ScootsStats.frames.flyout:SetPoint('TOPLEFT', slot, 'TOPLEFT', 0, 0)
+    
+    ScootsStats.frames.flyoutInner:ClearAllPoints()
+    if(slot:GetName() == 'CharacterMainHandSlot' or slot:GetName() == 'CharacterSecondaryHandSlot' or slot:GetName() == 'CharacterRangedSlot') then
+        ScootsStats.frames.flyout:SetWidth(slot:GetWidth())
+        ScootsStats.frames.flyout:SetHeight(slot:GetHeight() * 2)
+        ScootsStats.frames.flyoutInner:SetPoint('TOPLEFT', ScootsStats.frames.flyout, 'TOPLEFT', 0, 0 - slot:GetHeight())
+    else
+        ScootsStats.frames.flyout:SetWidth(slot:GetWidth() * 2)
+        ScootsStats.frames.flyout:SetHeight(slot:GetHeight())
+        ScootsStats.frames.flyoutInner:SetPoint('TOPLEFT', ScootsStats.frames.flyout, 'TOPLEFT', slot:GetWidth(), 0)
+    end
+    
+    for _, itemFrame in pairs(ScootsStats.frames.flyoutItems) do
+        itemFrame:Hide()
+        itemFrame:SetParent(UIParent)
+    end
+    
+    ScootsStats.currentFlyout = slot:GetName()
+    if(ScootsStats.updateFlyoutContent()) then
+        ScootsStats.frames.flyout:Show()
+    end
+end
+
+function ScootsStats.updateFlyoutContent()
+    local items = ScootsStats.getFlyoutItems()
+    
+    if(#items.toAttune == 0 and #items.attuned == 0 and #items.noAttune == 0) then
+        ScootsStats.hideFlyout()
+        return false
+    end
+    
+    local itemIndex = 0
+    local labelWidth = 0
+    local innerHeight = 14
+    
+    if(#items.toAttune == 0) then
+        ScootsStats.frames.flyoutToAttune:Hide()
+        ScootsStats.frames.flyoutAttuned:SetPoint('TOPLEFT', ScootsStats.frames.flyoutInner, 'TOPLEFT', 5, 0 - 5)
+        innerHeight = innerHeight - 2
+    else
+        ScootsStats.frames.flyoutToAttune:Show()
+        labelWidth = ScootsStats.frames.flyoutToAttune.label:GetWidth()
+        ScootsStats.frames.flyoutAttuned:SetPoint('TOPLEFT', ScootsStats.frames.flyoutToAttune, 'BOTTOMLEFT', 0, 0 - 2)
+    end
+    
+    if(#items.attuned == 0) then
+        ScootsStats.frames.flyoutAttuned:Hide()
+        innerHeight = innerHeight - 2
+        
+        if(#items.toAttune == 0) then
+            ScootsStats.frames.flyoutNoAttune:SetPoint('TOPLEFT', ScootsStats.frames.flyoutInner, 'TOPLEFT', 5, 0 - 5)
+        else
+            ScootsStats.frames.flyoutNoAttune:SetPoint('TOPLEFT', ScootsStats.frames.flyoutToAttune, 'BOTTOMLEFT', 0, 0 - 2)
+        end
+    else
+        ScootsStats.frames.flyoutAttuned:Show()
+        labelWidth = math.max(labelWidth, ScootsStats.frames.flyoutAttuned.label:GetWidth())
+        ScootsStats.frames.flyoutNoAttune:SetPoint('TOPLEFT', ScootsStats.frames.flyoutAttuned, 'BOTTOMLEFT', 0, 0 - 2)
+    end
+    
+    if(#items.noAttune == 0) then
+        ScootsStats.frames.flyoutNoAttune:Hide()
+        innerHeight = innerHeight - 2
+    else
+        ScootsStats.frames.flyoutNoAttune:Show()
+        labelWidth = math.max(labelWidth, ScootsStats.frames.flyoutNoAttune.label:GetWidth())
+    end
+    
+    ScootsStats.frames.flyoutToAttune:SetSize(0, 0)
+    if(#items.toAttune > 0) then
+        local groupItemIndex = 0
+        for _, item in ipairs(items.toAttune) do
+            itemIndex = itemIndex + 1
+            
+            local button = ScootsStats.getFlyoutItemButton(itemIndex, item)
+            ScootsStats.attachFlyoutItemButtonToParent(labelWidth, button, groupItemIndex, ScootsStats.frames.flyoutToAttune)
+            
+            groupItemIndex = groupItemIndex + 1
+        end
+        
+        innerHeight = innerHeight + ScootsStats.frames.flyoutToAttune:GetHeight()
+    end
+    
+    ScootsStats.frames.flyoutAttuned:SetSize(0, 0)
+    if(#items.attuned > 0) then
+        local groupItemIndex = 0
+        for _, item in ipairs(items.attuned) do
+            itemIndex = itemIndex + 1
+            
+            local button = ScootsStats.getFlyoutItemButton(itemIndex, item)
+            ScootsStats.attachFlyoutItemButtonToParent(labelWidth, button, groupItemIndex, ScootsStats.frames.flyoutAttuned)
+            
+            groupItemIndex = groupItemIndex + 1
+        end
+        
+        innerHeight = innerHeight + ScootsStats.frames.flyoutAttuned:GetHeight()
+    end
+    
+    ScootsStats.frames.flyoutNoAttune:SetSize(0, 0)
+    if(#items.noAttune > 0) then
+        local groupItemIndex = 0
+        for _, item in ipairs(items.noAttune) do
+            itemIndex = itemIndex + 1
+            
+            local button = ScootsStats.getFlyoutItemButton(itemIndex, item)
+            ScootsStats.attachFlyoutItemButtonToParent(labelWidth, button, groupItemIndex, ScootsStats.frames.flyoutNoAttune)
+            
+            groupItemIndex = groupItemIndex + 1
+        end
+        
+        innerHeight = innerHeight + ScootsStats.frames.flyoutNoAttune:GetHeight()
+    end
+    
+    ScootsStats.frames.flyoutInner:SetHeight(innerHeight)
+    
+    ScootsStats.frames.flyoutInner:SetWidth(math.max(
+        ScootsStats.frames.flyoutToAttune:GetWidth(),
+        ScootsStats.frames.flyoutAttuned:GetWidth(),
+        ScootsStats.frames.flyoutNoAttune:GetWidth()
+    ) + 10)
+    
+    local hTileCount = ScootsStats.frames.flyoutInner:GetWidth() / 128
+    ScootsStats.frames.flyoutInner.borderBottom:SetTexCoord(0, hTileCount, 0, 1)
+    ScootsStats.frames.flyoutInner.borderTop:SetTexCoord(0, hTileCount, 0, 1)
+    
+    local vTileCount = ScootsStats.frames.flyoutInner:GetHeight() / 128
+    ScootsStats.frames.flyoutInner.borderLeft:SetTexCoord(0, 1, 0, vTileCount)
+    ScootsStats.frames.flyoutInner.borderRight:SetTexCoord(0, 1, 0, vTileCount)
+    
+    ScootsStats.frames.flyoutInner.background:SetTexCoord(0, hTileCount, 0, vTileCount)
+    
+    return true
+end
+
+function ScootsStats.getFlyoutItemButton(itemIndex, itemArray)
+    if(ScootsStats.frames.flyoutItems[itemIndex] == nil) then
+        local button = CreateFrame('Button', 'ScootsStatsFlyout-Button-' .. itemIndex, UIParent, 'ItemButtonTemplate')
+
+        button:SetFrameStrata('HIGH')
+        button:SetSize(22, 22)
+        button:GetNormalTexture():SetAllPoints(button)
+        
+        button:SetScript('OnLeave', function()
+            GameTooltip:Hide()
+        end)
+        
+        ScootsStats.frames.flyoutItems[itemIndex] = button
+    end
+    
+    local button = ScootsStats.frames.flyoutItems[itemIndex]
+    button:SetNormalTexture(select(10, GetItemInfo(itemArray[2])))
+                
+    button:SetScript('OnEnter', function()
+        GameTooltip:SetOwner(button, 'ANCHOR_TOPLEFT')
+        GameTooltip:SetHyperlink(itemArray[2])
+        GameTooltip:Show()
+    end)
+    
+    button:SetScript('OnMouseUp', function(self, button)
+        if(IsAltKeyDown() and button == 'LeftButton') then
+            if(itemArray[1] == 'equip') then
+                PickupInventoryItem(itemArray[3])
+                EquipCursorItem(ScootsStats.slotIdMap[ScootsStats.currentFlyout])
+            elseif(itemArray[1] == 'bag') then
+                PickupContainerItem(itemArray[3], itemArray[4])
+                EquipCursorItem(ScootsStats.slotIdMap[ScootsStats.currentFlyout])
+            end
+        end
+    end)
+    
+    return button
+end
+
+function ScootsStats.attachFlyoutItemButtonToParent(labelWidth, itemButton, groupItemIndex, parentFrame)
+    local perRow = 6
+    local padding = 2
+    local size = 22
+    
+    local horizontalOffset = labelWidth + ((groupItemIndex % perRow) * (size + padding))
+    local verticalOffset = 0 - math.floor(groupItemIndex / perRow) * (size + padding)
+    
+    parentFrame:SetWidth(math.max(parentFrame:GetWidth(), horizontalOffset + size))
+    parentFrame:SetHeight(math.max(parentFrame:GetHeight(), math.abs(verticalOffset) + size))
+    
+    itemButton:SetParent(parentFrame)
+    itemButton:SetPoint('TOPLEFT', parentFrame, 'TOPLEFT', horizontalOffset, verticalOffset)
+    itemButton:Show()
+end
+
+function ScootsStats.getFlyoutItems()
+    if(ScootsStats.armourType == nil) then
+        -- Localisation for armour/weapon types due to no constants defined
+        ScootsStats.armourType = select(6, GetItemInfo(50605))
+        ScootsStats.armourSubTypeCloth = select(7, GetItemInfo(14100))
+        ScootsStats.armourSubTypeLeather = select(7, GetItemInfo(15053))
+        ScootsStats.armourSubTypeMail = select(7, GetItemInfo(50605))
+        ScootsStats.armourSubTypePlate = select(7, GetItemInfo(43586))
+        ScootsStats.armourSubTypeShield = select(7, GetItemInfo(49976))
+        
+        ScootsStats.weaponType = select(6, GetItemInfo(47239))
+        ScootsStats.weaponSubTypePolearm = select(7, GetItemInfo(47239))
+        ScootsStats.weaponSubTypeStaff = select(7, GetItemInfo(51799))
+        ScootsStats.weaponSubTypeSword = select(7, GetItemInfo(50427))
+        ScootsStats.weaponSubType2HSword = select(7, GetItemInfo(50070))
+        ScootsStats.weaponSubTypeAxe = select(7, GetItemInfo(51795))
+        ScootsStats.weaponSubType2HAxe = select(7, GetItemInfo(50415))
+        ScootsStats.weaponSubTypeMace = select(7, GetItemInfo(51798))
+        ScootsStats.weaponSubType2HMace = select(7, GetItemInfo(51796))
+        ScootsStats.weaponSubTypeDagger = select(7, GetItemInfo(51800))
+        ScootsStats.weaponSubTypeFist = select(7, GetItemInfo(51801))
+        
+        ScootsStats.weaponSubTypeBow = select(7, GetItemInfo(50776))
+        ScootsStats.weaponSubTypeGun = select(7, GetItemInfo(50444))
+        ScootsStats.weaponSubTypeCrossbow = select(7, GetItemInfo(51802))
+        ScootsStats.weaponSubTypeThrown = select(7, GetItemInfo(50999))
+        ScootsStats.weaponSubTypeWand = select(7, GetItemInfo(50472))
+        
+        ScootsStats.weaponSubTypeFishingPole = select(7, GetItemInfo(44050))
+    end
+    
+    local types = ScootsStats.inventoryFrames[ScootsStats.currentFlyout]
+    local items = {
+        ['toAttune'] = {},
+        ['attuned'] = {},
+        ['noAttune'] = {},
+    }
+    
+    if(ScootsStats.currentFlyout == 'CharacterSecondaryHandSlot') then
+        for _, playerClass in pairs(ScootsStats.playerClasses) do
+            if(playerClass == 'DEATHKNIGHT' or playerClass == 'HUNTER' or playerClass == 'ROGUE' or playerClass == 'SHAMAN' or playerClass == 'WARRIOR') then
+                table.insert(types, 'INVTYPE_WEAPON')
+            end
+            
+            if(playerClass == 'WARRIOR') then
+                table.insert(types, 'INVTYPE_2HWEAPON')
+            end
+        end
+    end
+    
+    local map = {
+        ['CharacterFinger0Slot'] = 'CharacterFinger1Slot',
+        ['CharacterFinger1Slot'] = 'CharacterFinger0Slot',
+        ['CharacterTrinket0Slot'] = 'CharacterTrinket1Slot',
+        ['CharacterTrinket1Slot'] = 'CharacterTrinket0Slot',
+    }
+    
+    for thisSlotName, otherSlotName in pairs(map) do
+        if(ScootsStats.currentFlyout == thisSlotName) then
+            local itemLink = GetInventoryItemLink('player', ScootsStats.slotIdMap[otherSlotName])
+            if(itemLink) then
+                local itemId = CustomExtractItemId(itemLink)
+                if((IsAttunableBySomeone(itemId) or 0) == 0 or (CanAttuneItemHelper(itemId) or 0) <= 0) then
+                    table.insert(items['noAttune'], {'equip', itemLink, ScootsStats.slotIdMap[otherSlotName]})
+                else
+                    if(GetItemLinkAttuneProgress(itemLink) < 100) then
+                        table.insert(items['toAttune'], {'equip', itemLink, ScootsStats.slotIdMap[otherSlotName]})
+                    else
+                        table.insert(items['attuned'], {'equip', itemLink, ScootsStats.slotIdMap[otherSlotName]})
+                    end
+                end
+            end
+        end
+    end
+    
+    if(ScootsStats.currentFlyout == 'CharacterMainHandSlot') then
+        local itemLink = GetInventoryItemLink('player', ScootsStats.slotIdMap['CharacterSecondaryHandSlot'])
+        if(itemLink) then
+            local itemId = CustomExtractItemId(itemLink)
+            local itemEquipLoc = select(9, GetItemInfo(itemLink))
+            
+            local canEquipHere = false
+            local itemEquipLoc = select(9, GetItemInfo(itemLink))
+            for _, possibleEquipLoc in pairs(types) do
+                if(itemEquipLoc == possibleEquipLoc) then
+                    canEquipHere = true
+                    break
+                end
+            end
+            
+            if(canEquipHere) then
+                if((IsAttunableBySomeone(itemId) or 0) == 0 or (CanAttuneItemHelper(itemId) or 0) <= 0) then
+                    table.insert(items['noAttune'], {'equip', itemLink, ScootsStats.slotIdMap['CharacterSecondaryHandSlot']})
+                else
+                    if(GetItemLinkAttuneProgress(itemLink) < 100) then
+                        table.insert(items['toAttune'], {'equip', itemLink, ScootsStats.slotIdMap['CharacterSecondaryHandSlot']})
+                    else
+                        table.insert(items['attuned'], {'equip', itemLink, ScootsStats.slotIdMap['CharacterSecondaryHandSlot']})
+                    end
+                end
+            end
+        end
+    end
+    
+    if(ScootsStats.currentFlyout == 'CharacterSecondaryHandSlot') then
+        local itemLink = GetInventoryItemLink('player', ScootsStats.slotIdMap['CharacterMainHandSlot'])
+        if(itemLink) then
+            local itemId = CustomExtractItemId(itemLink)
+            local _, _, _, _, _, _, itemSubType, _, itemEquipLoc = GetItemInfo(itemLink)
+            
+            local canEquipHere = false
+            local itemEquipLoc = select(9, GetItemInfo(itemLink))
+            for _, possibleEquipLoc in pairs(types) do
+                if(itemEquipLoc == possibleEquipLoc and itemSubType ~= ScootsStats.weaponSubTypePolearm and itemSubType ~= ScootsStats.weaponSubTypeStaff) then
+                    canEquipHere = true
+                    break
+                end
+            end
+            
+            if(canEquipHere) then
+                if((IsAttunableBySomeone(itemId) or 0) == 0 or (CanAttuneItemHelper(itemId) or 0) <= 0) then
+                    table.insert(items['noAttune'], {'equip', itemLink, ScootsStats.slotIdMap['CharacterMainHandSlot']})
+                else
+                    if(GetItemLinkAttuneProgress(itemLink) < 100) then
+                        table.insert(items['toAttune'], {'equip', itemLink, ScootsStats.slotIdMap['CharacterMainHandSlot']})
+                    else
+                        table.insert(items['attuned'], {'equip', itemLink, ScootsStats.slotIdMap['CharacterMainHandSlot']})
+                    end
+                end
+            end
+        end
+    end
+    
+    for bagIndex = 0, 4 do
+        if(bagIndex == 0 or GetInventoryItemID('player', 19 + bagIndex)) then
+            local bagSlots = GetContainerNumSlots(bagIndex)
+            for slotIndex = 1, bagSlots do
+                local itemLink = select(7, GetContainerItemInfo(bagIndex, slotIndex))
+                
+                if(itemLink ~= nil) then
+                    local canEquipHere = false
+                    local itemEquipLoc = select(9, GetItemInfo(itemLink))
+                    for _, possibleEquipLoc in pairs(types) do
+                        if(itemEquipLoc == possibleEquipLoc) then
+                            canEquipHere = true
+                            break
+                        end
+                    end
+                    
+                    if(canEquipHere) then
+                        if(ScootsStats.canEquipItem(itemLink, ScootsStats.currentFlyout == 'CharacterSecondaryHandSlot')) then
+                            local itemId = CustomExtractItemId(itemLink)
+                            
+                            if((IsAttunableBySomeone(itemId) or 0) == 0 or (CanAttuneItemHelper(itemId) or 0) <= 0) then
+                                table.insert(items['noAttune'], {'bag', itemLink, bagIndex, slotIndex})
+                            else
+                                if(GetItemLinkAttuneProgress(itemLink) < 100) then
+                                    table.insert(items['toAttune'], {'bag', itemLink, bagIndex, slotIndex})
+                                else
+                                    table.insert(items['attuned'], {'bag', itemLink, bagIndex, slotIndex})
+                                end
+                            end
+                        end
+                    end
+                end
+            end
+        end
+    end
+    
+    return items
+end
+
+function ScootsStats.canEquipItem(itemLink, isOffHand)
+    local _, _, _, _, itemMinLevel, itemType, itemSubType, _, itemEquipLoc = GetItemInfo(itemLink)
+    local playerLevel = UnitLevel('player')
+    
+    if(playerLevel < itemMinLevel) then
+        return false
+    end
+    
+    if(isOffHand and (itemSubType == ScootsStats.weaponSubTypePolearm or itemSubType == ScootsStats.weaponSubTypeStaff)) then
+        return false
+    end
+    
+    if(itemType == ScootsStats.armourType) then
+        local noArmourCheck = {
+            ['INVTYPE_NECK'] = true,
+            ['INVTYPE_CLOAK'] = true,
+            ['INVTYPE_BODY'] = true,
+            ['INVTYPE_TABARD'] = true,
+            ['INVTYPE_FINGER'] = true,
+            ['INVTYPE_TRINKET'] = true,
+            ['INVTYPE_HOLDABLE'] = true,
+        }
+        
+        if(noArmourCheck[itemEquipLoc] ~= true) then
+            local allowArmourType = false
+            
+            for _, playerClass in pairs(ScootsStats.playerClasses) do
+                if(itemSubType == ScootsStats.armourSubTypeCloth) then
+                    allowArmourType = true
+                    break
+                elseif(itemSubType == ScootsStats.armourSubTypeLeather) then
+                    if(playerClass ~= 'MAGE' and playerClass ~= 'PRIEST' and playerClass ~= 'WARLOCK') then
+                        allowArmourType = true
+                        break
+                    end
+                elseif(itemSubType == ScootsStats.armourSubTypeMail) then
+                    if(playerClass ~= 'MAGE' and playerClass ~= 'PRIEST' and playerClass ~= 'WARLOCK') then
+                        if(playerLevel >= 40 or (playerClass ~= 'HUNTER' and playerClass ~= 'SHAMAN')) then
+                            allowArmourType = true
+                            break
+                        end
+                    end
+                elseif(itemSubType == ScootsStats.armourSubTypePlate) then
+                    if(playerClass == 'DEATHKNIGHT' or playerClass == 'PALADIN' or playerClass == 'WARRIOR') then
+                        if(playerLevel >= 40) then
+                            allowArmourType = true
+                            break
+                        end
+                    end
+                elseif(itemSubType == ScootsStats.armourSubTypeShield) then
+                    if(playerClass == 'PALADIN' or playerClass == 'SHAMAN' or playerClass == 'WARRIOR') then
+                        allowArmourType = true
+                        break
+                    end
+                end
+            end
+            
+            if(allowArmourType == false) then
+                return false
+            end
+        end
+    elseif(itemType == ScootsStats.weaponType) then
+        local allowWeaponType = false
+        
+        if(itemSubType == ScootsStats.weaponSubTypeFishingPole) then
+            allowWeaponType = true
+        else
+            local map = {
+                [ScootsStats.weaponSubTypeDagger] = {
+                    ['DRUID'] = true,
+                    ['HUNTER'] = true,
+                    ['MAGE'] = true,
+                    ['PRIEST'] = true,
+                    ['ROGUE'] = true,
+                    ['SHAMAN'] = true,
+                    ['WARLOCK'] = true,
+                    ['WARRIOR'] = true,
+                },
+                [ScootsStats.weaponSubTypeFist] = {
+                    ['DRUID'] = true,
+                    ['HUNTER'] = true,
+                    ['ROGUE'] = true,
+                    ['SHAMAN'] = true,
+                    ['WARRIOR'] = true,
+                },
+                [ScootsStats.weaponSubTypeSword] = {
+                    ['DEATHKNIGHT'] = true,
+                    ['HUNTER'] = true,
+                    ['MAGE'] = true,
+                    ['PALADIN'] = true,
+                    ['ROGUE'] = true,
+                    ['WARLOCK'] = true,
+                    ['WARRIOR'] = true,
+                },
+                [ScootsStats.weaponSubType2HSword] = {
+                    ['DEATHKNIGHT'] = true,
+                    ['HUNTER'] = true,
+                    ['PALADIN'] = true,
+                    ['WARRIOR'] = true,
+                },
+                [ScootsStats.weaponSubTypeAxe] = {
+                    ['DEATHKNIGHT'] = true,
+                    ['HUNTER'] = true,
+                    ['PALADIN'] = true,
+                    ['ROGUE'] = true,
+                    ['SHAMAN'] = true,
+                    ['WARRIOR'] = true,
+                },
+                [ScootsStats.weaponSubType2HAxe] = {
+                    ['DEATHKNIGHT'] = true,
+                    ['HUNTER'] = true,
+                    ['PALADIN'] = true,
+                    ['SHAMAN'] = true,
+                    ['WARRIOR'] = true,
+                },
+                [ScootsStats.weaponSubTypeMace] = {
+                    ['DEATHKNIGHT'] = true,
+                    ['DRUID'] = true,
+                    ['PALADIN'] = true,
+                    ['PRIEST'] = true,
+                    ['ROGUE'] = true,
+                    ['SHAMAN'] = true,
+                    ['WARRIOR'] = true,
+                },
+                [ScootsStats.weaponSubType2HMace] = {
+                    ['DEATHKNIGHT'] = true,
+                    ['DRUID'] = true,
+                    ['PALADIN'] = true,
+                    ['SHAMAN'] = true,
+                    ['WARRIOR'] = true,
+                },
+                [ScootsStats.weaponSubTypePolearm] = {
+                    ['DEATHKNIGHT'] = true,
+                    ['HUNTER'] = true,
+                    ['PALADIN'] = true,
+                    ['WARRIOR'] = true,
+                },
+                [ScootsStats.weaponSubTypeStaff] = {
+                    ['DRUID'] = true,
+                    ['HUNTER'] = true,
+                    ['MAGE'] = true,
+                    ['PRIEST'] = true,
+                    ['SHAMAN'] = true,
+                    ['WARLOCK'] = true,
+                    ['WARRIOR'] = true,
+                },
+                [ScootsStats.weaponSubTypeThrown] = {
+                    ['HUNTER'] = true,
+                    ['ROGUE'] = true,
+                    ['WARRIOR'] = true,
+                },
+                [ScootsStats.weaponSubTypeBow] = {
+                    ['HUNTER'] = true,
+                    ['ROGUE'] = true,
+                    ['WARRIOR'] = true,
+                },
+                [ScootsStats.weaponSubTypeCrossbow] = {
+                    ['HUNTER'] = true,
+                    ['ROGUE'] = true,
+                    ['WARRIOR'] = true,
+                },
+                [ScootsStats.weaponSubTypeGun] = {
+                    ['HUNTER'] = true,
+                    ['ROGUE'] = true,
+                    ['WARRIOR'] = true,
+                },
+                [ScootsStats.weaponSubTypeWand] = {
+                    ['MAGE'] = true,
+                    ['PRIEST'] = true,
+                    ['WARLOCK'] = true,
+                },
+            }
+    
+            local noOffhandWeapons = {
+                ['DRUID'] = true,
+                ['MAGE'] = true,
+                ['PRIEST'] = true,
+                ['WARLOCK'] = true
+            }
+        
+            if(map[itemSubType] == nil) then
+                allowWeaponType = true
+            else
+                for _, playerClass in pairs(ScootsStats.playerClasses) do
+                    if(map[itemSubType][playerClass]) then
+                        if(itemEquipLoc ~= 'INVTYPE_WEAPONOFFHAND' or noOffhandWeapons[playerClass] == nil) then
+                            allowWeaponType = true
+                            break
+                        end
+                    end
+                end
+            end
+        end
+        
+        if(allowWeaponType == false) then
+            return false
+        end
+    end
+    
+    return true
+end
+
+function ScootsStats.createFlyout()
+    ScootsStats.frames.flyout = CreateFrame('Frame', 'ScootsStatsFlyout', UIParent)
+    ScootsStats.frames.flyout:SetFrameStrata('HIGH')
+    ScootsStats.frames.flyout:EnableMouse(true)
+    
+    ScootsStats.frames.flyoutInner = CreateFrame('Frame', 'ScootsStatsFlyout-Inner', ScootsStats.frames.flyout)
+    ScootsStats.frames.flyoutInner:SetFrameStrata('HIGH')
+    ScootsStats.frames.flyoutInner:EnableMouse(true)
+    
+    ScootsStats.frames.flyoutInner.borderTopLeft = ScootsStats.frames.flyoutInner:CreateTexture(nil, 'BACKGROUND')
+    ScootsStats.frames.flyoutInner.borderTopLeft:SetTexture('Interface\\AddOns\\ScootsStats\\Textures\\Item-Flyout-TopLeft')
+    ScootsStats.frames.flyoutInner.borderTopLeft:SetPoint('BOTTOMRIGHT', ScootsStats.frames.flyoutInner, 'TOPLEFT', 0, 0)
+    ScootsStats.frames.flyoutInner.borderTopLeft:SetSize(16, 16)
+    
+    ScootsStats.frames.flyoutInner.borderTop = ScootsStats.frames.flyoutInner:CreateTexture(nil, 'BACKGROUND')
+    ScootsStats.frames.flyoutInner.borderTop:SetTexture('Interface\\AddOns\\ScootsStats\\Textures\\Item-Flyout-Top', 'REPEAT')
+    ScootsStats.frames.flyoutInner.borderTop:SetPoint('BOTTOMLEFT', ScootsStats.frames.flyoutInner, 'TOPLEFT', 0, 0)
+    ScootsStats.frames.flyoutInner.borderTop:SetPoint('BOTTOMRIGHT', ScootsStats.frames.flyoutInner, 'TOPRIGHT', 0, 0)
+    ScootsStats.frames.flyoutInner.borderTop:SetHeight(16)
+    ScootsStats.frames.flyoutInner.borderTop:SetHorizTile(true)
+    
+    ScootsStats.frames.flyoutInner.borderTopRight = ScootsStats.frames.flyoutInner:CreateTexture(nil, 'BACKGROUND')
+    ScootsStats.frames.flyoutInner.borderTopRight:SetTexture('Interface\\AddOns\\ScootsStats\\Textures\\Item-Flyout-TopRight')
+    ScootsStats.frames.flyoutInner.borderTopRight:SetPoint('BOTTOMLEFT', ScootsStats.frames.flyoutInner, 'TOPRIGHT', 0, 0)
+    ScootsStats.frames.flyoutInner.borderTopRight:SetSize(16, 16)
+    
+    ScootsStats.frames.flyoutInner.borderRight = ScootsStats.frames.flyoutInner:CreateTexture(nil, 'BACKGROUND')
+    ScootsStats.frames.flyoutInner.borderRight:SetTexture('Interface\\AddOns\\ScootsStats\\Textures\\Item-Flyout-Right', 'CLAMP', 'REPEAT')
+    ScootsStats.frames.flyoutInner.borderRight:SetPoint('TOPLEFT', ScootsStats.frames.flyoutInner, 'TOPRIGHT', 0, 0)
+    ScootsStats.frames.flyoutInner.borderRight:SetPoint('BOTTOMLEFT', ScootsStats.frames.flyoutInner, 'BOTTOMRIGHT', 0, 0)
+    ScootsStats.frames.flyoutInner.borderRight:SetWidth(16)
+    ScootsStats.frames.flyoutInner.borderRight:SetVertTile(true)
+    
+    ScootsStats.frames.flyoutInner.borderBottomRight = ScootsStats.frames.flyoutInner:CreateTexture(nil, 'BACKGROUND')
+    ScootsStats.frames.flyoutInner.borderBottomRight:SetTexture('Interface\\AddOns\\ScootsStats\\Textures\\Item-Flyout-BottomRight')
+    ScootsStats.frames.flyoutInner.borderBottomRight:SetPoint('TOPLEFT', ScootsStats.frames.flyoutInner, 'BOTTOMRIGHT', 0, 0)
+    ScootsStats.frames.flyoutInner.borderBottomRight:SetSize(16, 16)
+    
+    ScootsStats.frames.flyoutInner.borderBottom = ScootsStats.frames.flyoutInner:CreateTexture(nil, 'BACKGROUND')
+    ScootsStats.frames.flyoutInner.borderBottom:SetTexture('Interface\\AddOns\\ScootsStats\\Textures\\Item-Flyout-Bottom', 'REPEAT')
+    ScootsStats.frames.flyoutInner.borderBottom:SetPoint('TOPLEFT', ScootsStats.frames.flyoutInner, 'BOTTOMLEFT', 0, 0)
+    ScootsStats.frames.flyoutInner.borderBottom:SetPoint('TOPRIGHT', ScootsStats.frames.flyoutInner, 'BOTTOMRIGHT', 0, 0)
+    ScootsStats.frames.flyoutInner.borderBottom:SetHeight(16)
+    ScootsStats.frames.flyoutInner.borderBottom:SetHorizTile(true)
+    
+    ScootsStats.frames.flyoutInner.borderBottomLeft = ScootsStats.frames.flyoutInner:CreateTexture(nil, 'BACKGROUND')
+    ScootsStats.frames.flyoutInner.borderBottomLeft:SetTexture('Interface\\AddOns\\ScootsStats\\Textures\\Item-Flyout-BottomLeft')
+    ScootsStats.frames.flyoutInner.borderBottomLeft:SetPoint('TOPRIGHT', ScootsStats.frames.flyoutInner, 'BOTTOMLEFT', 0, 0)
+    ScootsStats.frames.flyoutInner.borderBottomLeft:SetSize(16, 16)
+    
+    ScootsStats.frames.flyoutInner.borderLeft = ScootsStats.frames.flyoutInner:CreateTexture(nil, 'BACKGROUND')
+    ScootsStats.frames.flyoutInner.borderLeft:SetTexture('Interface\\AddOns\\ScootsStats\\Textures\\Item-Flyout-Left', 'CLAMP', 'REPEAT')
+    ScootsStats.frames.flyoutInner.borderLeft:SetPoint('TOPRIGHT', ScootsStats.frames.flyoutInner, 'TOPLEFT', 0, 0)
+    ScootsStats.frames.flyoutInner.borderLeft:SetPoint('BOTTOMRIGHT', ScootsStats.frames.flyoutInner, 'BOTTOMLEFT', 0, 0)
+    ScootsStats.frames.flyoutInner.borderLeft:SetWidth(16)
+    ScootsStats.frames.flyoutInner.borderLeft:SetVertTile(true)
+    
+    ScootsStats.frames.flyoutInner.background = ScootsStats.frames.flyoutInner:CreateTexture(nil, 'BACKGROUND')
+    ScootsStats.frames.flyoutInner.background:SetTexture('Interface\\AddOns\\ScootsStats\\Textures\\Item-Flyout-Middle', 'REPEAT', 'REPEAT')
+    ScootsStats.frames.flyoutInner.background:SetAllPoints()
+    ScootsStats.frames.flyoutInner.background:SetHorizTile(true)
+    ScootsStats.frames.flyoutInner.background:SetVertTile(true)
+    
+    ScootsStats.frames.flyoutToAttune = CreateFrame('Frame', 'ScootsStatsFlyout-ToAttune', ScootsStats.frames.flyoutInner)
+    ScootsStats.frames.flyoutToAttune:SetFrameStrata('HIGH')
+    ScootsStats.frames.flyoutToAttune:EnableMouse(true)
+    ScootsStats.frames.flyoutToAttune:SetPoint('TOPLEFT', ScootsStats.frames.flyoutInner, 'TOPLEFT', 5, 0 - 5)
+    
+    ScootsStats.frames.flyoutToAttune.label = ScootsStats.frames.flyoutToAttune:CreateFontString(nil, 'ARTWORK')
+    ScootsStats.frames.flyoutToAttune.label:SetFontObject('GameFontHighlightSmall')
+    ScootsStats.frames.flyoutToAttune.label:SetPoint('TOPLEFT', ScootsStats.frames.flyoutToAttune, 'TOPLEFT', 0, 0 - 4)
+    ScootsStats.frames.flyoutToAttune.label:SetJustifyH('LEFT')
+    ScootsStats.frames.flyoutToAttune.label:SetText('To attune: ')
+    
+    ScootsStats.frames.flyoutAttuned = CreateFrame('Frame', 'ScootsStatsFlyout-Attuned', ScootsStats.frames.flyoutInner)
+    ScootsStats.frames.flyoutAttuned:SetFrameStrata('HIGH')
+    ScootsStats.frames.flyoutAttuned:EnableMouse(true)
+    
+    ScootsStats.frames.flyoutAttuned.label = ScootsStats.frames.flyoutAttuned:CreateFontString(nil, 'ARTWORK')
+    ScootsStats.frames.flyoutAttuned.label:SetFontObject('GameFontHighlightSmall')
+    ScootsStats.frames.flyoutAttuned.label:SetPoint('TOPLEFT', ScootsStats.frames.flyoutAttuned, 'TOPLEFT', 0, 0 - 4)
+    ScootsStats.frames.flyoutAttuned.label:SetJustifyH('LEFT')
+    ScootsStats.frames.flyoutAttuned.label:SetText('Attuned: ')
+    
+    ScootsStats.frames.flyoutNoAttune = CreateFrame('Frame', 'ScootsStatsFlyout-NoAttune', ScootsStats.frames.flyoutInner)
+    ScootsStats.frames.flyoutNoAttune:SetFrameStrata('HIGH')
+    ScootsStats.frames.flyoutNoAttune:EnableMouse(true)
+    
+    ScootsStats.frames.flyoutNoAttune.label = ScootsStats.frames.flyoutNoAttune:CreateFontString(nil, 'ARTWORK')
+    ScootsStats.frames.flyoutNoAttune.label:SetFontObject('GameFontHighlightSmall')
+    ScootsStats.frames.flyoutNoAttune.label:SetPoint('TOPLEFT', ScootsStats.frames.flyoutNoAttune, 'TOPLEFT', 0, 0 - 4)
+    ScootsStats.frames.flyoutNoAttune.label:SetJustifyH('LEFT')
+    ScootsStats.frames.flyoutNoAttune.label:SetText('Can\'t attune: ')
+    
+    ScootsStats.frames.flyoutItems = {}
+end
