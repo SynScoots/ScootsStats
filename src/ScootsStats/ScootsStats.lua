@@ -1,5 +1,5 @@
 ScootsStats = {}
-ScootsStats.version = '2.4.1'
+ScootsStats.version = '2.5.0'
 ScootsStats.initialised = false
 ScootsStats.characterFrameOpen = false
 ScootsStats.optionsOpen = false
@@ -1417,8 +1417,10 @@ function ScootsStats.flyoutWatcher(slot)
     elseif(not IsAltKeyDown() and ScootsStats.currentFlyout ~= nil) then
         ScootsStats.hideFlyout()
         slot:SetFrameStrata('MEDIUM')
+        slot:SetFrameLevel(slot:GetParent():GetFrameLevel() + 1)
     elseif(slot:GetFrameStrata() == 'HIGH' and ScootsStats.currentFlyout ~= slot:GetName()) then
         slot:SetFrameStrata('MEDIUM')
+        slot:SetFrameLevel(slot:GetParent():GetFrameLevel() + 1)
     end
 end
 
@@ -1435,15 +1437,11 @@ function ScootsStats.showFlyout(slot)
     ScootsStats.frames.flyout:SetParent(slot)
     ScootsStats.frames.flyout:SetPoint('TOPLEFT', slot, 'TOPLEFT', 0, 0)
     
-    ScootsStats.frames.flyoutInner:ClearAllPoints()
+    ScootsStats.frames.flyout:ClearAllPoints()
     if(slot:GetName() == 'CharacterMainHandSlot' or slot:GetName() == 'CharacterSecondaryHandSlot' or slot:GetName() == 'CharacterRangedSlot') then
-        ScootsStats.frames.flyout:SetWidth(slot:GetWidth())
-        ScootsStats.frames.flyout:SetHeight(slot:GetHeight() * 2)
-        ScootsStats.frames.flyoutInner:SetPoint('TOPLEFT', ScootsStats.frames.flyout, 'TOPLEFT', 0, 0 - slot:GetHeight())
+        ScootsStats.frames.flyout:SetPoint('TOPLEFT', slot, 'BOTTOMLEFT', 0, 0)
     else
-        ScootsStats.frames.flyout:SetWidth(slot:GetWidth() * 2)
-        ScootsStats.frames.flyout:SetHeight(slot:GetHeight())
-        ScootsStats.frames.flyoutInner:SetPoint('TOPLEFT', ScootsStats.frames.flyout, 'TOPLEFT', slot:GetWidth(), 0)
+        ScootsStats.frames.flyout:SetPoint('TOPLEFT', slot, 'TOPRIGHT', 0, 0)
     end
     
     ScootsStats.currentFlyout = slot:GetName()
@@ -1471,7 +1469,7 @@ function ScootsStats.updateFlyoutContent()
     
     if(#items.toAttune == 0) then
         ScootsStats.frames.flyoutToAttune:Hide()
-        ScootsStats.frames.flyoutAttuned:SetPoint('TOPLEFT', ScootsStats.frames.flyoutInner, 'TOPLEFT', 5, 0 - 5)
+        ScootsStats.frames.flyoutAttuned:SetPoint('TOPLEFT', ScootsStats.frames.flyout, 'TOPLEFT', 5, 0 - 5)
         innerHeight = innerHeight - 2
     else
         ScootsStats.frames.flyoutToAttune:Show()
@@ -1484,7 +1482,7 @@ function ScootsStats.updateFlyoutContent()
         innerHeight = innerHeight - 2
         
         if(#items.toAttune == 0) then
-            ScootsStats.frames.flyoutNoAttune:SetPoint('TOPLEFT', ScootsStats.frames.flyoutInner, 'TOPLEFT', 5, 0 - 5)
+            ScootsStats.frames.flyoutNoAttune:SetPoint('TOPLEFT', ScootsStats.frames.flyout, 'TOPLEFT', 5, 0 - 5)
         else
             ScootsStats.frames.flyoutNoAttune:SetPoint('TOPLEFT', ScootsStats.frames.flyoutToAttune, 'BOTTOMLEFT', 0, 0 - 2)
         end
@@ -1547,23 +1545,23 @@ function ScootsStats.updateFlyoutContent()
         innerHeight = innerHeight + ScootsStats.frames.flyoutNoAttune:GetHeight()
     end
     
-    ScootsStats.frames.flyoutInner:SetHeight(innerHeight)
+    ScootsStats.frames.flyout:SetHeight(innerHeight)
     
-    ScootsStats.frames.flyoutInner:SetWidth(math.max(
+    ScootsStats.frames.flyout:SetWidth(math.max(
         ScootsStats.frames.flyoutToAttune:GetWidth(),
         ScootsStats.frames.flyoutAttuned:GetWidth(),
         ScootsStats.frames.flyoutNoAttune:GetWidth()
     ) + 10)
     
-    local hTileCount = ScootsStats.frames.flyoutInner:GetWidth() / 128
-    ScootsStats.frames.flyoutInner.borderBottom:SetTexCoord(0, hTileCount, 0, 1)
-    ScootsStats.frames.flyoutInner.borderTop:SetTexCoord(0, hTileCount, 0, 1)
+    local hTileCount = ScootsStats.frames.flyout:GetWidth() / 128
+    ScootsStats.frames.flyout.borderBottom:SetTexCoord(0, hTileCount, 0, 1)
+    ScootsStats.frames.flyout.borderTop:SetTexCoord(0, hTileCount, 0, 1)
     
-    local vTileCount = ScootsStats.frames.flyoutInner:GetHeight() / 128
-    ScootsStats.frames.flyoutInner.borderLeft:SetTexCoord(0, 1, 0, vTileCount)
-    ScootsStats.frames.flyoutInner.borderRight:SetTexCoord(0, 1, 0, vTileCount)
+    local vTileCount = ScootsStats.frames.flyout:GetHeight() / 128
+    ScootsStats.frames.flyout.borderLeft:SetTexCoord(0, 1, 0, vTileCount)
+    ScootsStats.frames.flyout.borderRight:SetTexCoord(0, 1, 0, vTileCount)
     
-    ScootsStats.frames.flyoutInner.background:SetTexCoord(0, hTileCount, 0, vTileCount)
+    ScootsStats.frames.flyout.background:SetTexCoord(0, hTileCount, 0, vTileCount)
     
     return true
 end
@@ -1576,6 +1574,13 @@ function ScootsStats.getFlyoutItemButton(itemIndex, itemArray)
         button:SetSize(22, 22)
         button:GetNormalTexture():SetAllPoints(button)
         
+        button.quality = button:CreateTexture(nil, 'OVERLAY')
+        button.quality:SetTexture('Interface\\Buttons\\UI-ActionButton-Border')
+        button.quality:SetBlendMode('ADD')
+        button.quality:SetAlpha(1)
+        button.quality:SetSize(38, 38)
+        button.quality:SetPoint('CENTER', 0, 0)
+        
         button:SetScript('OnLeave', function()
             GameTooltip:Hide()
         end)
@@ -1584,7 +1589,20 @@ function ScootsStats.getFlyoutItemButton(itemIndex, itemArray)
     end
     
     local button = ScootsStats.frames.flyoutItems[itemIndex]
-    button:SetNormalTexture(select(10, GetItemInfo(itemArray[2])))
+    local _, _, itemQuality, _, _, _, _, _, _, itemTexture = GetItemInfo(itemArray[2])
+    
+    button:SetNormalTexture(itemTexture)
+    
+    local colourMap = {
+        [0] = {0.615, 0.615, 0.615},
+        [1] = {1.000, 1.000, 1.000},
+        [2] = {0.118, 1.000, 0.000},
+        [3] = {0.000, 0.439, 0.867},
+        [4] = {0.639, 0.208, 0.933},
+        [5] = {1.000, 0.502, 0.000},
+    }
+    
+    button.quality:SetVertexColor(colourMap[itemQuality][1], colourMap[itemQuality][2], colourMap[itemQuality][3])
                 
     button:SetScript('OnEnter', function()
         GameTooltip:SetOwner(button, 'ANCHOR_TOPLEFT')
@@ -2002,68 +2020,64 @@ function ScootsStats.createFlyout()
     ScootsStats.frames.flyout:SetFrameStrata('HIGH')
     ScootsStats.frames.flyout:EnableMouse(true)
     
-    ScootsStats.frames.flyoutInner = CreateFrame('Frame', 'ScootsStatsFlyout-Inner', ScootsStats.frames.flyout)
-    ScootsStats.frames.flyoutInner:SetFrameStrata('HIGH')
-    ScootsStats.frames.flyoutInner:EnableMouse(true)
+    ScootsStats.frames.flyout.borderTopLeft = ScootsStats.frames.flyout:CreateTexture(nil, 'BACKGROUND')
+    ScootsStats.frames.flyout.borderTopLeft:SetTexture('Interface\\AddOns\\ScootsStats\\Textures\\Item-Flyout-TopLeft')
+    ScootsStats.frames.flyout.borderTopLeft:SetPoint('BOTTOMRIGHT', ScootsStats.frames.flyout, 'TOPLEFT', 0, 0)
+    ScootsStats.frames.flyout.borderTopLeft:SetSize(16, 16)
     
-    ScootsStats.frames.flyoutInner.borderTopLeft = ScootsStats.frames.flyoutInner:CreateTexture(nil, 'BACKGROUND')
-    ScootsStats.frames.flyoutInner.borderTopLeft:SetTexture('Interface\\AddOns\\ScootsStats\\Textures\\Item-Flyout-TopLeft')
-    ScootsStats.frames.flyoutInner.borderTopLeft:SetPoint('BOTTOMRIGHT', ScootsStats.frames.flyoutInner, 'TOPLEFT', 0, 0)
-    ScootsStats.frames.flyoutInner.borderTopLeft:SetSize(16, 16)
+    ScootsStats.frames.flyout.borderTop = ScootsStats.frames.flyout:CreateTexture(nil, 'BACKGROUND')
+    ScootsStats.frames.flyout.borderTop:SetTexture('Interface\\AddOns\\ScootsStats\\Textures\\Item-Flyout-Top', 'REPEAT')
+    ScootsStats.frames.flyout.borderTop:SetPoint('BOTTOMLEFT', ScootsStats.frames.flyout, 'TOPLEFT', 0, 0)
+    ScootsStats.frames.flyout.borderTop:SetPoint('BOTTOMRIGHT', ScootsStats.frames.flyout, 'TOPRIGHT', 0, 0)
+    ScootsStats.frames.flyout.borderTop:SetHeight(16)
+    ScootsStats.frames.flyout.borderTop:SetHorizTile(true)
     
-    ScootsStats.frames.flyoutInner.borderTop = ScootsStats.frames.flyoutInner:CreateTexture(nil, 'BACKGROUND')
-    ScootsStats.frames.flyoutInner.borderTop:SetTexture('Interface\\AddOns\\ScootsStats\\Textures\\Item-Flyout-Top', 'REPEAT')
-    ScootsStats.frames.flyoutInner.borderTop:SetPoint('BOTTOMLEFT', ScootsStats.frames.flyoutInner, 'TOPLEFT', 0, 0)
-    ScootsStats.frames.flyoutInner.borderTop:SetPoint('BOTTOMRIGHT', ScootsStats.frames.flyoutInner, 'TOPRIGHT', 0, 0)
-    ScootsStats.frames.flyoutInner.borderTop:SetHeight(16)
-    ScootsStats.frames.flyoutInner.borderTop:SetHorizTile(true)
+    ScootsStats.frames.flyout.borderTopRight = ScootsStats.frames.flyout:CreateTexture(nil, 'BACKGROUND')
+    ScootsStats.frames.flyout.borderTopRight:SetTexture('Interface\\AddOns\\ScootsStats\\Textures\\Item-Flyout-TopRight')
+    ScootsStats.frames.flyout.borderTopRight:SetPoint('BOTTOMLEFT', ScootsStats.frames.flyout, 'TOPRIGHT', 0, 0)
+    ScootsStats.frames.flyout.borderTopRight:SetSize(16, 16)
     
-    ScootsStats.frames.flyoutInner.borderTopRight = ScootsStats.frames.flyoutInner:CreateTexture(nil, 'BACKGROUND')
-    ScootsStats.frames.flyoutInner.borderTopRight:SetTexture('Interface\\AddOns\\ScootsStats\\Textures\\Item-Flyout-TopRight')
-    ScootsStats.frames.flyoutInner.borderTopRight:SetPoint('BOTTOMLEFT', ScootsStats.frames.flyoutInner, 'TOPRIGHT', 0, 0)
-    ScootsStats.frames.flyoutInner.borderTopRight:SetSize(16, 16)
+    ScootsStats.frames.flyout.borderRight = ScootsStats.frames.flyout:CreateTexture(nil, 'BACKGROUND')
+    ScootsStats.frames.flyout.borderRight:SetTexture('Interface\\AddOns\\ScootsStats\\Textures\\Item-Flyout-Right', 'CLAMP', 'REPEAT')
+    ScootsStats.frames.flyout.borderRight:SetPoint('TOPLEFT', ScootsStats.frames.flyout, 'TOPRIGHT', 0, 0)
+    ScootsStats.frames.flyout.borderRight:SetPoint('BOTTOMLEFT', ScootsStats.frames.flyout, 'BOTTOMRIGHT', 0, 0)
+    ScootsStats.frames.flyout.borderRight:SetWidth(16)
+    ScootsStats.frames.flyout.borderRight:SetVertTile(true)
     
-    ScootsStats.frames.flyoutInner.borderRight = ScootsStats.frames.flyoutInner:CreateTexture(nil, 'BACKGROUND')
-    ScootsStats.frames.flyoutInner.borderRight:SetTexture('Interface\\AddOns\\ScootsStats\\Textures\\Item-Flyout-Right', 'CLAMP', 'REPEAT')
-    ScootsStats.frames.flyoutInner.borderRight:SetPoint('TOPLEFT', ScootsStats.frames.flyoutInner, 'TOPRIGHT', 0, 0)
-    ScootsStats.frames.flyoutInner.borderRight:SetPoint('BOTTOMLEFT', ScootsStats.frames.flyoutInner, 'BOTTOMRIGHT', 0, 0)
-    ScootsStats.frames.flyoutInner.borderRight:SetWidth(16)
-    ScootsStats.frames.flyoutInner.borderRight:SetVertTile(true)
+    ScootsStats.frames.flyout.borderBottomRight = ScootsStats.frames.flyout:CreateTexture(nil, 'BACKGROUND')
+    ScootsStats.frames.flyout.borderBottomRight:SetTexture('Interface\\AddOns\\ScootsStats\\Textures\\Item-Flyout-BottomRight')
+    ScootsStats.frames.flyout.borderBottomRight:SetPoint('TOPLEFT', ScootsStats.frames.flyout, 'BOTTOMRIGHT', 0, 0)
+    ScootsStats.frames.flyout.borderBottomRight:SetSize(16, 16)
     
-    ScootsStats.frames.flyoutInner.borderBottomRight = ScootsStats.frames.flyoutInner:CreateTexture(nil, 'BACKGROUND')
-    ScootsStats.frames.flyoutInner.borderBottomRight:SetTexture('Interface\\AddOns\\ScootsStats\\Textures\\Item-Flyout-BottomRight')
-    ScootsStats.frames.flyoutInner.borderBottomRight:SetPoint('TOPLEFT', ScootsStats.frames.flyoutInner, 'BOTTOMRIGHT', 0, 0)
-    ScootsStats.frames.flyoutInner.borderBottomRight:SetSize(16, 16)
+    ScootsStats.frames.flyout.borderBottom = ScootsStats.frames.flyout:CreateTexture(nil, 'BACKGROUND')
+    ScootsStats.frames.flyout.borderBottom:SetTexture('Interface\\AddOns\\ScootsStats\\Textures\\Item-Flyout-Bottom', 'REPEAT')
+    ScootsStats.frames.flyout.borderBottom:SetPoint('TOPLEFT', ScootsStats.frames.flyout, 'BOTTOMLEFT', 0, 0)
+    ScootsStats.frames.flyout.borderBottom:SetPoint('TOPRIGHT', ScootsStats.frames.flyout, 'BOTTOMRIGHT', 0, 0)
+    ScootsStats.frames.flyout.borderBottom:SetHeight(16)
+    ScootsStats.frames.flyout.borderBottom:SetHorizTile(true)
     
-    ScootsStats.frames.flyoutInner.borderBottom = ScootsStats.frames.flyoutInner:CreateTexture(nil, 'BACKGROUND')
-    ScootsStats.frames.flyoutInner.borderBottom:SetTexture('Interface\\AddOns\\ScootsStats\\Textures\\Item-Flyout-Bottom', 'REPEAT')
-    ScootsStats.frames.flyoutInner.borderBottom:SetPoint('TOPLEFT', ScootsStats.frames.flyoutInner, 'BOTTOMLEFT', 0, 0)
-    ScootsStats.frames.flyoutInner.borderBottom:SetPoint('TOPRIGHT', ScootsStats.frames.flyoutInner, 'BOTTOMRIGHT', 0, 0)
-    ScootsStats.frames.flyoutInner.borderBottom:SetHeight(16)
-    ScootsStats.frames.flyoutInner.borderBottom:SetHorizTile(true)
+    ScootsStats.frames.flyout.borderBottomLeft = ScootsStats.frames.flyout:CreateTexture(nil, 'BACKGROUND')
+    ScootsStats.frames.flyout.borderBottomLeft:SetTexture('Interface\\AddOns\\ScootsStats\\Textures\\Item-Flyout-BottomLeft')
+    ScootsStats.frames.flyout.borderBottomLeft:SetPoint('TOPRIGHT', ScootsStats.frames.flyout, 'BOTTOMLEFT', 0, 0)
+    ScootsStats.frames.flyout.borderBottomLeft:SetSize(16, 16)
     
-    ScootsStats.frames.flyoutInner.borderBottomLeft = ScootsStats.frames.flyoutInner:CreateTexture(nil, 'BACKGROUND')
-    ScootsStats.frames.flyoutInner.borderBottomLeft:SetTexture('Interface\\AddOns\\ScootsStats\\Textures\\Item-Flyout-BottomLeft')
-    ScootsStats.frames.flyoutInner.borderBottomLeft:SetPoint('TOPRIGHT', ScootsStats.frames.flyoutInner, 'BOTTOMLEFT', 0, 0)
-    ScootsStats.frames.flyoutInner.borderBottomLeft:SetSize(16, 16)
+    ScootsStats.frames.flyout.borderLeft = ScootsStats.frames.flyout:CreateTexture(nil, 'BACKGROUND')
+    ScootsStats.frames.flyout.borderLeft:SetTexture('Interface\\AddOns\\ScootsStats\\Textures\\Item-Flyout-Left', 'CLAMP', 'REPEAT')
+    ScootsStats.frames.flyout.borderLeft:SetPoint('TOPRIGHT', ScootsStats.frames.flyout, 'TOPLEFT', 0, 0)
+    ScootsStats.frames.flyout.borderLeft:SetPoint('BOTTOMRIGHT', ScootsStats.frames.flyout, 'BOTTOMLEFT', 0, 0)
+    ScootsStats.frames.flyout.borderLeft:SetWidth(16)
+    ScootsStats.frames.flyout.borderLeft:SetVertTile(true)
     
-    ScootsStats.frames.flyoutInner.borderLeft = ScootsStats.frames.flyoutInner:CreateTexture(nil, 'BACKGROUND')
-    ScootsStats.frames.flyoutInner.borderLeft:SetTexture('Interface\\AddOns\\ScootsStats\\Textures\\Item-Flyout-Left', 'CLAMP', 'REPEAT')
-    ScootsStats.frames.flyoutInner.borderLeft:SetPoint('TOPRIGHT', ScootsStats.frames.flyoutInner, 'TOPLEFT', 0, 0)
-    ScootsStats.frames.flyoutInner.borderLeft:SetPoint('BOTTOMRIGHT', ScootsStats.frames.flyoutInner, 'BOTTOMLEFT', 0, 0)
-    ScootsStats.frames.flyoutInner.borderLeft:SetWidth(16)
-    ScootsStats.frames.flyoutInner.borderLeft:SetVertTile(true)
+    ScootsStats.frames.flyout.background = ScootsStats.frames.flyout:CreateTexture(nil, 'BACKGROUND')
+    ScootsStats.frames.flyout.background:SetTexture('Interface\\AddOns\\ScootsStats\\Textures\\Item-Flyout-Middle', 'REPEAT', 'REPEAT')
+    ScootsStats.frames.flyout.background:SetAllPoints()
+    ScootsStats.frames.flyout.background:SetHorizTile(true)
+    ScootsStats.frames.flyout.background:SetVertTile(true)
     
-    ScootsStats.frames.flyoutInner.background = ScootsStats.frames.flyoutInner:CreateTexture(nil, 'BACKGROUND')
-    ScootsStats.frames.flyoutInner.background:SetTexture('Interface\\AddOns\\ScootsStats\\Textures\\Item-Flyout-Middle', 'REPEAT', 'REPEAT')
-    ScootsStats.frames.flyoutInner.background:SetAllPoints()
-    ScootsStats.frames.flyoutInner.background:SetHorizTile(true)
-    ScootsStats.frames.flyoutInner.background:SetVertTile(true)
-    
-    ScootsStats.frames.flyoutToAttune = CreateFrame('Frame', 'ScootsStatsFlyout-ToAttune', ScootsStats.frames.flyoutInner)
+    ScootsStats.frames.flyoutToAttune = CreateFrame('Frame', 'ScootsStatsFlyout-ToAttune', ScootsStats.frames.flyout)
     ScootsStats.frames.flyoutToAttune:SetFrameStrata('HIGH')
     ScootsStats.frames.flyoutToAttune:EnableMouse(true)
-    ScootsStats.frames.flyoutToAttune:SetPoint('TOPLEFT', ScootsStats.frames.flyoutInner, 'TOPLEFT', 5, 0 - 5)
+    ScootsStats.frames.flyoutToAttune:SetPoint('TOPLEFT', ScootsStats.frames.flyout, 'TOPLEFT', 5, 0 - 5)
     
     ScootsStats.frames.flyoutToAttune.label = ScootsStats.frames.flyoutToAttune:CreateFontString(nil, 'ARTWORK')
     ScootsStats.frames.flyoutToAttune.label:SetFontObject('GameFontHighlightSmall')
@@ -2071,7 +2085,7 @@ function ScootsStats.createFlyout()
     ScootsStats.frames.flyoutToAttune.label:SetJustifyH('LEFT')
     ScootsStats.frames.flyoutToAttune.label:SetText('To attune: ')
     
-    ScootsStats.frames.flyoutAttuned = CreateFrame('Frame', 'ScootsStatsFlyout-Attuned', ScootsStats.frames.flyoutInner)
+    ScootsStats.frames.flyoutAttuned = CreateFrame('Frame', 'ScootsStatsFlyout-Attuned', ScootsStats.frames.flyout)
     ScootsStats.frames.flyoutAttuned:SetFrameStrata('HIGH')
     ScootsStats.frames.flyoutAttuned:EnableMouse(true)
     
@@ -2081,7 +2095,7 @@ function ScootsStats.createFlyout()
     ScootsStats.frames.flyoutAttuned.label:SetJustifyH('LEFT')
     ScootsStats.frames.flyoutAttuned.label:SetText('Attuned: ')
     
-    ScootsStats.frames.flyoutNoAttune = CreateFrame('Frame', 'ScootsStatsFlyout-NoAttune', ScootsStats.frames.flyoutInner)
+    ScootsStats.frames.flyoutNoAttune = CreateFrame('Frame', 'ScootsStatsFlyout-NoAttune', ScootsStats.frames.flyout)
     ScootsStats.frames.flyoutNoAttune:SetFrameStrata('HIGH')
     ScootsStats.frames.flyoutNoAttune:EnableMouse(true)
     
