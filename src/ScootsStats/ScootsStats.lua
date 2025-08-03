@@ -1,5 +1,5 @@
 ScootsStats = {}
-ScootsStats.version = '2.5.0'
+ScootsStats.version = '2.5.1'
 ScootsStats.initialised = false
 ScootsStats.characterFrameOpen = false
 ScootsStats.optionsOpen = false
@@ -1411,7 +1411,7 @@ PaperDollFrameItemFlyout_OnHide = function() end
 PaperDollFrameItemFlyout_OnUpdate = function() end
 
 function ScootsStats.flyoutWatcher(slot)
-    if(IsAltKeyDown() and slot:IsMouseOver() and ScootsStats.currentFlyout ~= slot:GetName()) then
+    if(IsAltKeyDown() and slot:IsMouseOver() and (not ScootsStats.frames.flyout or not ScootsStats.frames.flyout:IsMouseOver()) and ScootsStats.currentFlyout ~= slot:GetName()) then
         ScootsStats.showFlyout(slot)
         slot:SetFrameStrata('HIGH')
     elseif(not IsAltKeyDown() and ScootsStats.currentFlyout ~= nil) then
@@ -1644,32 +1644,155 @@ end
 function ScootsStats.getFlyoutItems()
     if(ScootsStats.armourType == nil) then
         -- Localisation for armour/weapon types due to no constants defined
-        ScootsStats.armourType = select(6, GetItemInfo(50605))
-        ScootsStats.armourSubTypeCloth = select(7, GetItemInfo(14100))
-        ScootsStats.armourSubTypeLeather = select(7, GetItemInfo(15053))
-        ScootsStats.armourSubTypeMail = select(7, GetItemInfo(50605))
-        ScootsStats.armourSubTypePlate = select(7, GetItemInfo(43586))
-        ScootsStats.armourSubTypeShield = select(7, GetItemInfo(49976))
-        
-        ScootsStats.weaponType = select(6, GetItemInfo(47239))
-        ScootsStats.weaponSubTypePolearm = select(7, GetItemInfo(47239))
-        ScootsStats.weaponSubTypeStaff = select(7, GetItemInfo(51799))
-        ScootsStats.weaponSubTypeSword = select(7, GetItemInfo(50427))
-        ScootsStats.weaponSubType2HSword = select(7, GetItemInfo(50070))
-        ScootsStats.weaponSubTypeAxe = select(7, GetItemInfo(51795))
-        ScootsStats.weaponSubType2HAxe = select(7, GetItemInfo(50415))
-        ScootsStats.weaponSubTypeMace = select(7, GetItemInfo(51798))
-        ScootsStats.weaponSubType2HMace = select(7, GetItemInfo(51796))
-        ScootsStats.weaponSubTypeDagger = select(7, GetItemInfo(51800))
-        ScootsStats.weaponSubTypeFist = select(7, GetItemInfo(51801))
-        
-        ScootsStats.weaponSubTypeBow = select(7, GetItemInfo(50776))
-        ScootsStats.weaponSubTypeGun = select(7, GetItemInfo(50444))
-        ScootsStats.weaponSubTypeCrossbow = select(7, GetItemInfo(51802))
-        ScootsStats.weaponSubTypeThrown = select(7, GetItemInfo(50999))
-        ScootsStats.weaponSubTypeWand = select(7, GetItemInfo(50472))
-        
-        ScootsStats.weaponSubTypeFishingPole = select(7, GetItemInfo(44050))
+        local map = {
+            -- ## Armour
+            {
+                ['key'] = 'armourType',
+                ['id'] = 50605,
+                ['index'] = 6,
+                ['fallback'] = 'Armor',
+            },
+            {
+                ['key'] = 'armourSubTypeCloth',
+                ['id'] = 14100,
+                ['index'] = 7,
+                ['fallback'] = 'Cloth',
+            },
+            {
+                ['key'] = 'armourSubTypeLeather',
+                ['id'] = 15053,
+                ['index'] = 7,
+                ['fallback'] = 'Leather',
+            },
+            {
+                ['key'] = 'armourSubTypeMail',
+                ['id'] = 50605,
+                ['index'] = 7,
+                ['fallback'] = 'Mail',
+            },
+            {
+                ['key'] = 'armourSubTypePlate',
+                ['id'] = 43586,
+                ['index'] = 7,
+                ['fallback'] = 'Plate',
+            },
+            {
+                ['key'] = 'armourSubTypeShield',
+                ['id'] = 49976,
+                ['index'] = 7,
+                ['fallback'] = 'Shields',
+            },
+            -- ## Melee
+            {
+                ['key'] = 'weaponType',
+                ['id'] = 47239,
+                ['index'] = 6,
+                ['fallback'] = 'Weapon',
+            },
+            {
+                ['key'] = 'weaponSubTypePolearm',
+                ['id'] = 47239,
+                ['index'] = 7,
+                ['fallback'] = 'Polearms',
+            },
+            {
+                ['key'] = 'weaponSubTypeStaff',
+                ['id'] = 51799,
+                ['index'] = 7,
+                ['fallback'] = 'Staves',
+            },
+            {
+                ['key'] = 'weaponSubTypeSword',
+                ['id'] = 50427,
+                ['index'] = 7,
+                ['fallback'] = 'One-Handed Swords',
+            },
+            {
+                ['key'] = 'weaponSubType2HSword',
+                ['id'] = 50070,
+                ['index'] = 7,
+                ['fallback'] = 'Two-Handed Swords',
+            },
+            {
+                ['key'] = 'weaponSubTypeAxe',
+                ['id'] = 51795,
+                ['index'] = 7,
+                ['fallback'] = 'One-Handed Axes',
+            },
+            {
+                ['key'] = 'weaponSubType2HAxe',
+                ['id'] = 50415,
+                ['index'] = 7,
+                ['fallback'] = 'Two-Handed Axes',
+            },
+            {
+                ['key'] = 'weaponSubTypeMace',
+                ['id'] = 51798,
+                ['index'] = 7,
+                ['fallback'] = 'One-Handed Maces',
+            },
+            {
+                ['key'] = 'weaponSubType2HMace',
+                ['id'] = 51796,
+                ['index'] = 7,
+                ['fallback'] = 'Two-Handed Maces',
+            },
+            {
+                ['key'] = 'weaponSubTypeDagger',
+                ['id'] = 51800,
+                ['index'] = 7,
+                ['fallback'] = 'Daggers',
+            },
+            {
+                ['key'] = 'weaponSubTypeFist',
+                ['id'] = 51801,
+                ['index'] = 7,
+                ['fallback'] = 'Fist Weapons',
+            },
+            -- ## Ranged
+            {
+                ['key'] = 'weaponSubTypeBow',
+                ['id'] = 50776,
+                ['index'] = 7,
+                ['fallback'] = 'Bows',
+            },
+            {
+                ['key'] = 'weaponSubTypeGun',
+                ['id'] = 50444,
+                ['index'] = 7,
+                ['fallback'] = 'Guns',
+            },
+            {
+                ['key'] = 'weaponSubTypeCrossbow',
+                ['id'] = 51802,
+                ['index'] = 7,
+                ['fallback'] = 'Crossbows',
+            },
+            {
+                ['key'] = 'weaponSubTypeThrown',
+                ['id'] = 50999,
+                ['index'] = 7,
+                ['fallback'] = 'Thrown',
+            },
+            {
+                ['key'] = 'weaponSubTypeWand',
+                ['id'] = 50472,
+                ['index'] = 7,
+                ['fallback'] = 'Wands',
+            },
+            -- ## Other
+            {
+                ['key'] = 'weaponSubTypeFishingPole',
+                ['id'] = 44050,
+                ['index'] = 7,
+                ['fallback'] = 'Fishing Poles',
+            },
+        }
+
+        for _, mapping in pairs(map) do
+            local itemInfo = {GetItemInfo(mapping.id)}
+            ScootsStats[mapping.key] = itemInfo[mapping.index] or mapping.fallback
+        end
     end
     
     local types = ScootsStats.inventoryFrames[ScootsStats.currentFlyout]
