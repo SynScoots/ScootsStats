@@ -1,5 +1,5 @@
 ScootsStats = {}
-ScootsStats.version = '2.5.1'
+ScootsStats.version = '2.5.2'
 ScootsStats.initialised = false
 ScootsStats.characterFrameOpen = false
 ScootsStats.optionsOpen = false
@@ -1600,6 +1600,7 @@ function ScootsStats.getFlyoutItemButton(itemIndex, itemArray)
         [3] = {0.000, 0.439, 0.867},
         [4] = {0.639, 0.208, 0.933},
         [5] = {1.000, 0.502, 0.000},
+        [7] = {0.902, 0.800, 0.502},
     }
     
     button.quality:SetVertexColor(colourMap[itemQuality][1], colourMap[itemQuality][2], colourMap[itemQuality][3])
