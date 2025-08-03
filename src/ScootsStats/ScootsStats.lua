@@ -1,5 +1,5 @@
 ScootsStats = {}
-ScootsStats.version = '2.5.3'
+ScootsStats.version = '2.5.4'
 ScootsStats.initialised = false
 ScootsStats.characterFrameOpen = false
 ScootsStats.optionsOpen = false
@@ -666,7 +666,7 @@ ScootsStats.enterAttune = function(frame)
                 
                 if(itemProgress < 100) then
                     GameTooltip:AddDoubleLine(
-                        select(1, GetItemInfo(itemId)),
+                        select(1, GetItemInfoCustom(itemId)),
                         string.format('%.2f', itemProgress) .. '%',
                         NORMAL_FONT_COLOR.r,
                         NORMAL_FONT_COLOR.g,
@@ -1589,7 +1589,7 @@ function ScootsStats.getFlyoutItemButton(itemIndex, itemArray)
     end
     
     local button = ScootsStats.frames.flyoutItems[itemIndex]
-    local _, _, itemQuality, _, _, _, _, _, _, itemTexture = GetItemInfo(itemArray[2])
+    local _, _, itemQuality, _, _, _, _, _, _, itemTexture = GetItemInfoCustom(itemArray[2])
     
     button:SetNormalTexture(itemTexture)
     
@@ -1791,7 +1791,7 @@ function ScootsStats.getFlyoutItems()
         }
 
         for _, mapping in pairs(map) do
-            local itemInfo = {GetItemInfo(mapping.id)}
+            local itemInfo = {GetItemInfoCustom(mapping.id)}
             ScootsStats[mapping.key] = itemInfo[mapping.index] or mapping.fallback
         end
     end
@@ -1844,10 +1844,10 @@ function ScootsStats.getFlyoutItems()
         local itemLink = GetInventoryItemLink('player', ScootsStats.slotIdMap['CharacterSecondaryHandSlot'])
         if(itemLink) then
             local itemId = CustomExtractItemId(itemLink)
-            local itemEquipLoc = select(9, GetItemInfo(itemLink))
+            local itemEquipLoc = select(9, GetItemInfoCustom(itemLink))
             
             local canEquipHere = false
-            local itemEquipLoc = select(9, GetItemInfo(itemLink))
+            local itemEquipLoc = select(9, GetItemInfoCustom(itemLink))
             for _, possibleEquipLoc in pairs(types) do
                 if(itemEquipLoc == possibleEquipLoc) then
                     canEquipHere = true
@@ -1873,10 +1873,10 @@ function ScootsStats.getFlyoutItems()
         local itemLink = GetInventoryItemLink('player', ScootsStats.slotIdMap['CharacterMainHandSlot'])
         if(itemLink) then
             local itemId = CustomExtractItemId(itemLink)
-            local _, _, _, _, _, _, itemSubType, _, itemEquipLoc = GetItemInfo(itemLink)
+            local _, _, _, _, _, _, itemSubType, _, itemEquipLoc = GetItemInfoCustom(itemLink)
             
             local canEquipHere = false
-            local itemEquipLoc = select(9, GetItemInfo(itemLink))
+            local itemEquipLoc = select(9, GetItemInfoCustom(itemLink))
             for _, possibleEquipLoc in pairs(types) do
                 if(itemEquipLoc == possibleEquipLoc and itemSubType ~= ScootsStats.weaponSubTypePolearm and itemSubType ~= ScootsStats.weaponSubTypeStaff) then
                     canEquipHere = true
@@ -1906,7 +1906,7 @@ function ScootsStats.getFlyoutItems()
                 
                 if(itemLink ~= nil) then
                     local canEquipHere = false
-                    local itemEquipLoc = select(9, GetItemInfo(itemLink))
+                    local itemEquipLoc = select(9, GetItemInfoCustom(itemLink))
                     for _, possibleEquipLoc in pairs(types) do
                         if(itemEquipLoc == possibleEquipLoc) then
                             canEquipHere = true
@@ -1938,7 +1938,7 @@ function ScootsStats.getFlyoutItems()
 end
 
 function ScootsStats.canEquipItem(itemLink, isOffHand)
-    local _, _, _, _, itemMinLevel, itemType, itemSubType, _, itemEquipLoc = GetItemInfo(itemLink)
+    local _, _, _, _, itemMinLevel, itemType, itemSubType, _, itemEquipLoc = GetItemInfoCustom(itemLink)
     local playerLevel = UnitLevel('player')
     
     if(playerLevel < itemMinLevel) then
