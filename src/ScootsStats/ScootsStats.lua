@@ -1,5 +1,5 @@
 ScootsStats = {}
-ScootsStats.version = '2.5.2'
+ScootsStats.version = '2.5.3'
 ScootsStats.initialised = false
 ScootsStats.characterFrameOpen = false
 ScootsStats.optionsOpen = false
@@ -2070,6 +2070,7 @@ function ScootsStats.canEquipItem(itemLink, isOffHand)
                 },
                 [ScootsStats.weaponSubTypePolearm] = {
                     ['DEATHKNIGHT'] = true,
+                    ['DRUID'] = true,
                     ['HUNTER'] = true,
                     ['PALADIN'] = true,
                     ['WARRIOR'] = true,
