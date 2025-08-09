@@ -1,5 +1,5 @@
 ScootsStats = {}
-ScootsStats.version = '2.5.5'
+ScootsStats.version = '2.5.6'
 ScootsStats.initialised = false
 ScootsStats.characterFrameOpen = false
 ScootsStats.optionsOpen = false
@@ -156,6 +156,10 @@ ScootsStats.init = function()
     
     _G['GearManagerToggleButton']:ClearAllPoints()
     _G['GearManagerToggleButton']:SetPoint('TOPLEFT', _G['CharacterFrame'], 'TOPLEFT', 315, -40)
+    
+    _G['TokenFrameCancelButton']:SetScript('OnClick', function()
+        HideUIPanel(_G['CharacterFrame'])
+    end)
     
     ScootsStats.sectionFrames = {}
     ScootsStats.rowFrames = {}
@@ -857,7 +861,7 @@ ScootsStats.setStatLootCoercion = function(frame)
     
     local effect = (100 / ScootsStats.totalAccountAttunes) * ScootsStats.accountAttunes
     
-    PaperDollFrame_SetLabelAndText(frame, 'Loot Coercion', string.format('%.2f', effect) .. '%')
+    PaperDollFrame_SetLabelAndText(frame, 'BoP Coercion', string.format('%.2f', effect) .. '%')
 end
 
 ScootsStats.enterLootCoercion = function(frame)
@@ -866,7 +870,7 @@ ScootsStats.enterLootCoercion = function(frame)
     end
     
     GameTooltip:SetOwner(frame, 'ANCHOR_RIGHT')
-    GameTooltip:SetText('Loot Coercion', HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b)
+    GameTooltip:SetText('Bind-on-Pickup Coercion', HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b)
     GameTooltip:AddLine('This shows an increased chance for dropped bind-on-pickup items to be useful to you after prestige.', nil, nil, nil, true)
     GameTooltip:AddLine(' ')
     GameTooltip:AddLine('Equal to your total account attunes relative to the total number of attunable items in the game.', nil, nil, nil, true)
@@ -883,7 +887,7 @@ ScootsStats.setStatAffixCoercion = function(frame)
     if(ScootsStats.totalAccountAffixes ~= nil) then
         local effect = ((100 / ScootsStats.totalAccountAffixes) * ScootsStats.attunedAffixes) / 4
         
-        PaperDollFrame_SetLabelAndText(frame, 'Affix Coercion', string.format('%.2f', effect) .. '%')
+        PaperDollFrame_SetLabelAndText(frame, 'BoE Coercion', string.format('%.2f', effect) .. '%')
     end
 end
 
@@ -893,8 +897,10 @@ ScootsStats.enterAffixCoercion = function(frame)
     end
     
     GameTooltip:SetOwner(frame, 'ANCHOR_RIGHT')
-    GameTooltip:SetText('Affix Coercion', HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b)
-    GameTooltip:AddLine('This shows an increased chance for dropped bind-on-equip items with an affix (e.g. "of the Eagle") to have your preferred affix (based on your affix manager settings) after prestige.', nil, nil, nil, true)
+    GameTooltip:SetText('Bind-on-Equip Coercion', HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b)
+    GameTooltip:AddLine('This shows an increased chance to drop a bind-on-equip item you have not attuned after prestige.', nil, nil, nil, true)
+    GameTooltip:AddLine(' ')
+    GameTooltip:AddLine('When this effect occurs for an affixed item, it will be useful to you as dictated by your affix manager settings.', nil, nil, nil, true)
     GameTooltip:AddLine(' ')
     GameTooltip:AddLine('Equal to a quarter of your total account affix attunes relative to the total number of attunable affixes in the game.', nil, nil, nil, true)
     GameTooltip:AddLine(' ')
@@ -1052,8 +1058,8 @@ ScootsStats.toggleOptionsPanel = function(frame)
                     ['rows'] = {
                         {'Char. Attunes', 'prestige', 'charattunes'},
                         {'Forge Power', 'prestige', 'forgepower'},
-                        {'Loot Coercion', 'prestige', 'lootcoercion'},
-                        {'Affix Coercion', 'prestige', 'affixcoercion'},
+                        {'BoP Coercion', 'prestige', 'lootcoercion'},
+                        {'BoE Coercion', 'prestige', 'affixcoercion'},
                         {'Attune Mastery', 'prestige', 'bonusexp'}
                     }
                 }
