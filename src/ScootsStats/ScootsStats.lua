@@ -1,5 +1,5 @@
 ScootsStats = {}
-ScootsStats.version = '2.5.6'
+ScootsStats.version = '2.5.7'
 ScootsStats.initialised = false
 ScootsStats.characterFrameOpen = false
 ScootsStats.optionsOpen = false
@@ -1385,7 +1385,7 @@ ScootsStats.inventoryFrames = {
     ['CharacterTrinket1Slot'] = {'INVTYPE_TRINKET'},
     ['CharacterMainHandSlot'] = {'INVTYPE_WEAPON', 'INVTYPE_2HWEAPON', 'INVTYPE_WEAPONMAINHAND'},
     ['CharacterSecondaryHandSlot'] = {'INVTYPE_SHIELD', 'INVTYPE_HOLDABLE', 'INVTYPE_WEAPONOFFHAND'},
-    ['CharacterRangedSlot'] = {'INVTYPE_RANGED', 'INVTYPE_RANGEDRIGHT', 'INVTYPE_RELIC'},
+    ['CharacterRangedSlot'] = {'INVTYPE_RANGED', 'INVTYPE_RANGEDRIGHT', 'INVTYPE_THROWN', 'INVTYPE_RELIC'},
 }
 
 ScootsStats.slotIdMap = {
