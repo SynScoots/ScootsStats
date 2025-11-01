@@ -1,5 +1,5 @@
 ScootsStats = {}
-ScootsStats.version = '2.5.7'
+ScootsStats.version = '2.6.0'
 ScootsStats.initialised = false
 ScootsStats.characterFrameOpen = false
 ScootsStats.optionsOpen = false
@@ -923,7 +923,7 @@ ScootsStats.enterBonusExp = function(frame)
     
     GameTooltip:SetOwner(frame, 'ANCHOR_RIGHT')
     GameTooltip:SetText('Attune Mastery', HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b)
-    GameTooltip:AddLine('After prestige, you will be able to attune items in your inventory at this this effectiveness.', nil, nil, nil, true)
+    GameTooltip:AddLine('After prestige, you will be able to attune items in your inventory at this effectiveness.', nil, nil, nil, true)
     GameTooltip:AddLine(' ')
     GameTooltip:AddLine('Increased by attuning lightforged items with an item level above 200.', nil, nil, nil, true)
     GameTooltip:AddLine('Higher item levels yield higher effect.', nil, nil, nil, true)
@@ -1464,46 +1464,72 @@ function ScootsStats.updateFlyoutContent()
         itemFrame:SetParent(UIParent)
     end
     
-    if(#items.toAttune == 0 and #items.attuned == 0 and #items.noAttune == 0) then
+    if(#items.toAttune == 0 and #items.attuned == 0 and #items.noAttune == 0 and items.unequip == false) then
         ScootsStats.hideFlyout()
         return false
     end
     
     local itemIndex = 0
     local labelWidth = 0
-    local innerHeight = 14
+    local innerHeight = 16
+    local anchor = nil
+    
+    ScootsStats.frames.flyoutToAttune:Hide()
+    ScootsStats.frames.flyoutAttuned:Hide()
+    ScootsStats.frames.flyoutNoAttune:Hide()
+    ScootsStats.frames.flyoutUnequip:Hide()
     
     if(#items.toAttune == 0) then
-        ScootsStats.frames.flyoutToAttune:Hide()
-        ScootsStats.frames.flyoutAttuned:SetPoint('TOPLEFT', ScootsStats.frames.flyout, 'TOPLEFT', 5, 0 - 5)
         innerHeight = innerHeight - 2
     else
         ScootsStats.frames.flyoutToAttune:Show()
         labelWidth = ScootsStats.frames.flyoutToAttune.label:GetWidth()
-        ScootsStats.frames.flyoutAttuned:SetPoint('TOPLEFT', ScootsStats.frames.flyoutToAttune, 'BOTTOMLEFT', 0, 0 - 2)
+        anchor = ScootsStats.frames.flyoutToAttune
     end
     
     if(#items.attuned == 0) then
-        ScootsStats.frames.flyoutAttuned:Hide()
         innerHeight = innerHeight - 2
-        
-        if(#items.toAttune == 0) then
-            ScootsStats.frames.flyoutNoAttune:SetPoint('TOPLEFT', ScootsStats.frames.flyout, 'TOPLEFT', 5, 0 - 5)
-        else
-            ScootsStats.frames.flyoutNoAttune:SetPoint('TOPLEFT', ScootsStats.frames.flyoutToAttune, 'BOTTOMLEFT', 0, 0 - 2)
-        end
     else
         ScootsStats.frames.flyoutAttuned:Show()
         labelWidth = math.max(labelWidth, ScootsStats.frames.flyoutAttuned.label:GetWidth())
-        ScootsStats.frames.flyoutNoAttune:SetPoint('TOPLEFT', ScootsStats.frames.flyoutAttuned, 'BOTTOMLEFT', 0, 0 - 2)
+        
+        if(anchor) then
+            ScootsStats.frames.flyoutAttuned:SetPoint('TOPLEFT', anchor, 'BOTTOMLEFT', 0, 0 - 2)
+        else
+            ScootsStats.frames.flyoutAttuned:SetPoint('TOPLEFT', ScootsStats.frames.flyout, 'TOPLEFT', 5, 0 - 5)
+        end
+        
+        anchor = ScootsStats.frames.flyoutAttuned
     end
     
     if(#items.noAttune == 0) then
-        ScootsStats.frames.flyoutNoAttune:Hide()
         innerHeight = innerHeight - 2
     else
         ScootsStats.frames.flyoutNoAttune:Show()
         labelWidth = math.max(labelWidth, ScootsStats.frames.flyoutNoAttune.label:GetWidth())
+        
+        if(anchor) then
+            ScootsStats.frames.flyoutNoAttune:SetPoint('TOPLEFT', anchor, 'BOTTOMLEFT', 0, 0 - 2)
+        else
+            ScootsStats.frames.flyoutNoAttune:SetPoint('TOPLEFT', ScootsStats.frames.flyout, 'TOPLEFT', 5, 0 - 5)
+        end
+        
+        anchor = ScootsStats.frames.flyoutNoAttune
+    end
+    
+    if(items.unequip == false) then
+        innerHeight = innerHeight - 2
+    else
+        ScootsStats.frames.flyoutUnequip:Show()
+        labelWidth = math.max(labelWidth, ScootsStats.frames.flyoutUnequip.label:GetWidth())
+        
+        if(anchor) then
+            ScootsStats.frames.flyoutUnequip:SetPoint('TOPLEFT', anchor, 'BOTTOMLEFT', 0, 0 - 2)
+        else
+            ScootsStats.frames.flyoutUnequip:SetPoint('TOPLEFT', ScootsStats.frames.flyout, 'TOPLEFT', 5, 0 - 5)
+        end
+        
+        anchor = ScootsStats.frames.flyoutUnequip
     end
     
     ScootsStats.frames.flyoutToAttune:SetSize(0, 0)
@@ -1551,12 +1577,22 @@ function ScootsStats.updateFlyoutContent()
         innerHeight = innerHeight + ScootsStats.frames.flyoutNoAttune:GetHeight()
     end
     
+    ScootsStats.frames.flyoutUnequip:SetSize(0, 0)
+    if(items.unequip == true) then
+        itemIndex = itemIndex + 1
+        local button = ScootsStats.getFlyoutItemButton(itemIndex, nil)
+        ScootsStats.attachFlyoutItemButtonToParent(labelWidth, button, 0, ScootsStats.frames.flyoutUnequip)
+        
+        innerHeight = innerHeight + ScootsStats.frames.flyoutUnequip:GetHeight()
+    end
+    
     ScootsStats.frames.flyout:SetHeight(innerHeight)
     
     ScootsStats.frames.flyout:SetWidth(math.max(
         ScootsStats.frames.flyoutToAttune:GetWidth(),
         ScootsStats.frames.flyoutAttuned:GetWidth(),
-        ScootsStats.frames.flyoutNoAttune:GetWidth()
+        ScootsStats.frames.flyoutNoAttune:GetWidth(),
+        ScootsStats.frames.flyoutUnequip:GetWidth()
     ) + 10)
     
     local hTileCount = ScootsStats.frames.flyout:GetWidth() / 128
@@ -1595,39 +1631,59 @@ function ScootsStats.getFlyoutItemButton(itemIndex, itemArray)
     end
     
     local button = ScootsStats.frames.flyoutItems[itemIndex]
-    local _, _, itemQuality, _, _, _, _, _, _, itemTexture = GetItemInfoCustom(CustomExtractItemId(itemArray[2]))
     
-    button:SetNormalTexture(itemTexture)
-    
-    local colourMap = {
-        [0] = {0.615, 0.615, 0.615},
-        [1] = {1.000, 1.000, 1.000},
-        [2] = {0.118, 1.000, 0.000},
-        [3] = {0.000, 0.439, 0.867},
-        [4] = {0.639, 0.208, 0.933},
-        [5] = {1.000, 0.502, 0.000},
-        [7] = {0.902, 0.800, 0.502},
-    }
-    
-    button.quality:SetVertexColor(colourMap[itemQuality][1], colourMap[itemQuality][2], colourMap[itemQuality][3])
-                
-    button:SetScript('OnEnter', function()
-        GameTooltip:SetOwner(button, 'ANCHOR_TOPLEFT')
-        GameTooltip:SetHyperlink(itemArray[2])
-        GameTooltip:Show()
-    end)
-    
-    button:SetScript('OnMouseUp', function(self, button)
-        if(IsAltKeyDown() and button == 'LeftButton') then
-            if(itemArray[1] == 'equip') then
-                PickupInventoryItem(itemArray[3])
-                EquipCursorItem(ScootsStats.slotIdMap[ScootsStats.currentFlyout])
-            elseif(itemArray[1] == 'bag') then
-                PickupContainerItem(itemArray[3], itemArray[4])
-                EquipCursorItem(ScootsStats.slotIdMap[ScootsStats.currentFlyout])
+    if(itemArray == nil) then
+        button.quality:Hide()
+        
+        button:SetNormalTexture('Interface\\PaperDollInfoFrame\\UI-GearManager-ItemIntoBag')
+        
+        button:SetScript('OnEnter', nil)
+        
+        button:SetScript('OnMouseUp', function(self, button)
+            if(IsAltKeyDown() and button == 'LeftButton') then
+                PickupInventoryItem(ScootsStats.slotIdMap[ScootsStats.currentFlyout])
+                EquipmentManager_PutItemInInventory({
+                    ['type'] = UNEQUIP_ITEM,
+                    ['invSlot'] = ScootsStats.slotIdMap[ScootsStats.currentFlyout],
+                })
             end
-        end
-    end)
+        end)
+    else
+        local _, _, itemQuality, _, _, _, _, _, _, itemTexture = GetItemInfoCustom(CustomExtractItemId(itemArray[2]))
+        
+        button:SetNormalTexture(itemTexture)
+        
+        local colourMap = {
+            [0] = {0.615, 0.615, 0.615},
+            [1] = {1.000, 1.000, 1.000},
+            [2] = {0.118, 1.000, 0.000},
+            [3] = {0.000, 0.439, 0.867},
+            [4] = {0.639, 0.208, 0.933},
+            [5] = {1.000, 0.502, 0.000},
+            [7] = {0.902, 0.800, 0.502},
+        }
+        
+        button.quality:Show()
+        button.quality:SetVertexColor(colourMap[itemQuality][1], colourMap[itemQuality][2], colourMap[itemQuality][3])
+                    
+        button:SetScript('OnEnter', function()
+            GameTooltip:SetOwner(button, 'ANCHOR_TOPLEFT')
+            GameTooltip:SetHyperlink(itemArray[2])
+            GameTooltip:Show()
+        end)
+        
+        button:SetScript('OnMouseUp', function(self, button)
+            if(IsAltKeyDown() and button == 'LeftButton') then
+                if(itemArray[1] == 'equip') then
+                    PickupInventoryItem(itemArray[3])
+                    EquipCursorItem(ScootsStats.slotIdMap[ScootsStats.currentFlyout])
+                elseif(itemArray[1] == 'bag') then
+                    PickupContainerItem(itemArray[3], itemArray[4])
+                    EquipCursorItem(ScootsStats.slotIdMap[ScootsStats.currentFlyout])
+                end
+            end
+        end)
+    end
     
     return button
 end
@@ -1804,10 +1860,15 @@ function ScootsStats.getFlyoutItems()
     
     local types = ScootsStats.inventoryFrames[ScootsStats.currentFlyout]
     local items = {
+        ['unequip'] = false,
         ['toAttune'] = {},
         ['attuned'] = {},
         ['noAttune'] = {},
     }
+    
+    if(GetInventoryItemLink('player', ScootsStats.slotIdMap[ScootsStats.currentFlyout])) then
+        items.unequip = true
+    end
     
     if(ScootsStats.currentFlyout == 'CharacterSecondaryHandSlot') then
         for _, playerClass in pairs(ScootsStats.playerClasses) do
@@ -2235,6 +2296,16 @@ function ScootsStats.createFlyout()
     ScootsStats.frames.flyoutNoAttune.label:SetPoint('TOPLEFT', ScootsStats.frames.flyoutNoAttune, 'TOPLEFT', 0, 0 - 4)
     ScootsStats.frames.flyoutNoAttune.label:SetJustifyH('LEFT')
     ScootsStats.frames.flyoutNoAttune.label:SetText('Can\'t attune: ')
+    
+    ScootsStats.frames.flyoutUnequip = CreateFrame('Frame', 'ScootsStatsFlyout-Unequip', ScootsStats.frames.flyout)
+    ScootsStats.frames.flyoutUnequip:SetFrameStrata('HIGH')
+    ScootsStats.frames.flyoutUnequip:EnableMouse(true)
+    
+    ScootsStats.frames.flyoutUnequip.label = ScootsStats.frames.flyoutUnequip:CreateFontString(nil, 'ARTWORK')
+    ScootsStats.frames.flyoutUnequip.label:SetFontObject('GameFontHighlightSmall')
+    ScootsStats.frames.flyoutUnequip.label:SetPoint('TOPLEFT', ScootsStats.frames.flyoutUnequip, 'TOPLEFT', 0, 0 - 4)
+    ScootsStats.frames.flyoutUnequip.label:SetJustifyH('LEFT')
+    ScootsStats.frames.flyoutUnequip.label:SetText('Unequip: ')
     
     ScootsStats.frames.flyoutItems = {}
 end
