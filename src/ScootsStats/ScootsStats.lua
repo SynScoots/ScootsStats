@@ -1,5 +1,5 @@
 ScootsStats = {}
-ScootsStats.version = '2.6.0'
+ScootsStats.version = '2.6.1'
 ScootsStats.initialised = false
 ScootsStats.characterFrameOpen = false
 ScootsStats.optionsOpen = false
@@ -954,7 +954,7 @@ ScootsStats.itemIsNotBound = function(itemLink)
         if(line:IsObjectType('FontString')) then
             local text = line:GetText()
             
-            if(text == ITEM_SOULBOUND) then
+            if(text == ITEM_SOULBOUND or text == ITEM_BIND_ON_PICKUP) then
                 ScootsStats.frames.tooltip:Hide()
                 return false
             end
