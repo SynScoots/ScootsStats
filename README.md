@@ -1,4 +1,4 @@
-ScootsStats <span style="color: #98fb98">2.6.1</span>.
+ScootsStats <span style="color: #98fb98">2.7.0</span>.
 
 ## Description ##
 
@@ -13,8 +13,6 @@ Download this repository, then extract the `ScootsStats` subdirectory from the `
 ## Screenshots ##
 
 ![Screenshot of stat panel](./img/v2-stats.png)
-
-![Screenshot of options panel](./img/v2-options.png)
 
 ![Screenshot of tooltip](./img/v2-tooltip.png)
 

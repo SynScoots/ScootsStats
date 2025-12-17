@@ -4,6 +4,9 @@
 ## Notes: Adds a frame to the side of the character panel with all stats displayed at once
 ## Author: Scoots
 ## SavedVariablesPerCharacter: SCOOTSSTATS_OPTIONS
-## Version: 2.6.1
+## Version: 2.7.0
 
 ScootsStats.lua
+ScootsStats-flyout.lua
+ScootsStats-options.lua
+ScootsStats-main.lua
