@@ -138,7 +138,7 @@ ScootsStats.frames.options:HookScript('OnShow', function(frame)
         end)
         
         mergedPrestigeCheck:SetScript('OnEnter', function()
-            GameTooltip:SetOwner(mergedPrestigeCheck, 'ANCHOR_TOP')
+            GameTooltip:SetOwner(mergedPrestigeCheck, 'ANCHOR_TOPLEFT')
             GameTooltip:SetText('If enabled, prestige stats will show what value you will have after your next prestige instead of only what you have gained this cycle.', nil, nil, nil, nil, 1)
         end)
         
@@ -175,8 +175,8 @@ ScootsStats.frames.optionsFields:HookScript('OnShow', function(frame)
     scrollBar:SetPoint('BOTTOM', scrollDownButton, 'TOP', 0, 2)
 
     scrollFrame:SetScrollChild(scrollChild)
-    scrollFrame:SetPoint('TOPLEFT', frame, 'TOPLEFT', 0, -3)
-    scrollFrame:SetHeight(423)
+    scrollFrame:SetPoint('TOPLEFT', frame, 'TOPLEFT', 0, -5)
+    scrollFrame:SetHeight(419)
 
     local title = scrollChild:CreateFontString('ScootsStats-Options-Fields-Title', 'OVERLAY', 'GameFontNormalLarge')
     title:SetPoint('TOPLEFT', scrollChild, 'TOPLEFT', 16, -10)
@@ -308,7 +308,7 @@ ScootsStats.frames.optionsFields:HookScript('OnShow', function(frame)
             
             _G[fieldToggle:GetName() .. 'Text']:SetText(row[1])
             _G[fieldToggle:GetName() .. 'Text']:ClearAllPoints()
-            _G[fieldToggle:GetName() .. 'Text']:SetPoint('TOPLEFT', fieldToggle, 'TOPRIGHT', -2, -5)
+            _G[fieldToggle:GetName() .. 'Text']:SetPoint('TOPLEFT', fieldToggle, 'TOPRIGHT', -3, -6)
             
             fieldToggle:SetHitRectInsets(0, 0 - _G[fieldToggle:GetName() .. 'Text']:GetWidth(), 0, 0)
             

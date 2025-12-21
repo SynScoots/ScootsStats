@@ -967,6 +967,10 @@ ScootsStats.setStatAffixCoercion = function(frame)
         ScootsStats.countAttunes()
     end
     
+    if(CalculateAttunableAffixCount and ScootsStats.totalAccountAffixes == nil) then
+        ScootsStats.totalAccountAffixes = CalculateAttunableAffixCount()
+    end
+    
     if(ScootsStats.totalAccountAffixes ~= nil) then
         local effect = ((100 / ScootsStats.totalAccountAffixes) * ScootsStats.attunedAffixes) / 4
     
@@ -981,6 +985,10 @@ end
 ScootsStats.enterAffixCoercion = function(frame)
     if(ScootsStats.queuedAttunedUpdate) then
         ScootsStats.countAttunes()
+    end
+    
+    if(CalculateAttunableAffixCount and ScootsStats.totalAccountAffixes == nil) then
+        ScootsStats.totalAccountAffixes = CalculateAttunableAffixCount()
     end
     
     GameTooltip:SetOwner(frame, 'ANCHOR_RIGHT')
