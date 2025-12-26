@@ -511,6 +511,30 @@ function ScootsStats.getFlyoutItems()
                 ['index'] = 7,
                 ['fallback'] = 'Wands',
             },
+            {
+                ['key'] = 'weaponSubTypeIdol',
+                ['id'] = 50456,
+                ['index'] = 7,
+                ['fallback'] = 'Idols',
+            },
+            {
+                ['key'] = 'weaponSubTypeLibram',
+                ['id'] = 50460,
+                ['index'] = 7,
+                ['fallback'] = 'Librams',
+            },
+            {
+                ['key'] = 'weaponSubTypeTotem',
+                ['id'] = 50458,
+                ['index'] = 7,
+                ['fallback'] = 'Totems',
+            },
+            {
+                ['key'] = 'weaponSubTypeSigil',
+                ['id'] = 50462,
+                ['index'] = 7,
+                ['fallback'] = 'Sigils',
+            },
             -- ## Other
             {
                 ['key'] = 'weaponSubTypeFishingPole',
@@ -726,6 +750,26 @@ function ScootsStats.canEquipItem(itemLink, isOffHand)
                         allowArmourType = true
                         break
                     end
+                elseif(itemSubType == ScootsStats.weaponSubTypeIdol) then
+                    if(playerClass == 'DRUID') then
+                        allowArmourType = true
+                        break
+                    end
+                elseif(itemSubType == ScootsStats.weaponSubTypeLibram) then
+                    if(playerClass == 'PALADIN') then
+                        allowArmourType = true
+                        break
+                    end
+                elseif(itemSubType == ScootsStats.weaponSubTypeTotem) then
+                    if(playerClass == 'SHAMAN') then
+                        allowArmourType = true
+                        break
+                    end
+                elseif(itemSubType == ScootsStats.weaponSubTypeSigil) then
+                    if(playerClass == 'DEATHKNIGHT') then
+                        allowArmourType = true
+                        break
+                    end
                 end
             end
             
@@ -843,6 +887,18 @@ function ScootsStats.canEquipItem(itemLink, isOffHand)
                     ['MAGE'] = true,
                     ['PRIEST'] = true,
                     ['WARLOCK'] = true,
+                },
+                [ScootsStats.weaponSubTypeIdol] = {
+                    ['DRUID'] = true,
+                },
+                [ScootsStats.weaponSubTypeLibram] = {
+                    ['PALADIN'] = true,
+                },
+                [ScootsStats.weaponSubTypeTotem] = {
+                    ['SHAMAN'] = true,
+                },
+                [ScootsStats.weaponSubTypeSigil] = {
+                    ['DEATHKNIGHT'] = true,
                 },
             }
     
