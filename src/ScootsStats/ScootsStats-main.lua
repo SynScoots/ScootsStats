@@ -714,9 +714,110 @@ ScootsStats.setStatAttuneInv = function(frame)
 end
 
 ScootsStats.enterAttuneInv = function(frame)
+    local characterProgress = 0
+    local accountProgress = 0
+    local forgePowerProgress = 0
+    local boeCoercionProgress = 0
+    
+    if( CustomExtractItemId
+    and IsAttunableBySomeone
+    and GetItemAttuneForge
+    and CanAttuneItemHelper) then
+        for bagIndex = 0, 4 do
+            local bagSlots = GetContainerNumSlots(bagIndex)
+            
+            for slotIndex = 1, bagSlots do
+                local itemLink = select(7, GetContainerItemInfo(bagIndex, slotIndex))
+                local itemId = CustomExtractItemId(itemLink)
+    
+                if(itemId) then
+                    local canAttuneNormally = CanAttuneItemHelper(itemId) >= 1
+                    
+                    if(canAttuneNormally or ((IsAttunableBySomeone(itemId) or 0) ~= 0 and ScootsStats.itemIsNotBound(itemLink))) then
+                        local itemForgedAt = GetItemAttuneForge(itemId)
+                        local itemForgeLevel = GetItemLinkTitanforge(itemLink)
+                        local affixId = CustomExtractItemAffix(itemLink)
+                        
+                        if(itemForgedAt < 0) then
+                            accountProgress = accountProgress + 1
+                    
+                            if(canAttuneNormally) then
+                                characterProgress = characterProgress + 1
+                            end
+                        end
+                        
+                        if(itemForgeLevel > 0 and itemForgeLevel > itemForgedAt) then
+                            forgePowerProgress = forgePowerProgress + 1
+                        end
+                        
+                        if(affixId ~= 0 and GetItemAttuneProgress(itemId, affixId) < 100) then
+                            boeCoercionProgress = boeCoercionProgress + 1
+                        end
+                    end
+                end
+            end
+        end
+    end
+
     GameTooltip:SetOwner(frame, 'ANCHOR_RIGHT')
     GameTooltip:SetText('Inventory Attunements', HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b)
     GameTooltip:AddLine('Attuning equipment in your inventory at ' .. string.format('%.2f', ScootsStats.attuneMastery) .. '% effectiveness.', nil, nil, nil, true)
+    
+    if((characterProgress + accountProgress + boeCoercionProgress + forgePowerProgress) > 0) then
+        GameTooltip:AddLine(' ')
+    end
+    
+    if(characterProgress > 0) then
+        GameTooltip:AddDoubleLine(
+            'Items contributing to prestige as this class',
+            characterProgress,
+            NORMAL_FONT_COLOR.r,
+            NORMAL_FONT_COLOR.g,
+            NORMAL_FONT_COLOR.b,
+            HIGHLIGHT_FONT_COLOR.r,
+            HIGHLIGHT_FONT_COLOR.g,
+            HIGHLIGHT_FONT_COLOR.b
+        )
+    end
+    
+    if(accountProgress > 0) then
+        GameTooltip:AddDoubleLine(
+            'Items contributing to BoP coercion',
+            accountProgress,
+            NORMAL_FONT_COLOR.r,
+            NORMAL_FONT_COLOR.g,
+            NORMAL_FONT_COLOR.b,
+            HIGHLIGHT_FONT_COLOR.r,
+            HIGHLIGHT_FONT_COLOR.g,
+            HIGHLIGHT_FONT_COLOR.b
+        )
+    end
+    
+    if(boeCoercionProgress > 0) then
+        GameTooltip:AddDoubleLine(
+            'Items contributing to BoE coercion',
+            boeCoercionProgress,
+            NORMAL_FONT_COLOR.r,
+            NORMAL_FONT_COLOR.g,
+            NORMAL_FONT_COLOR.b,
+            HIGHLIGHT_FONT_COLOR.r,
+            HIGHLIGHT_FONT_COLOR.g,
+            HIGHLIGHT_FONT_COLOR.b
+        )
+    end
+    
+    if(forgePowerProgress > 0) then
+        GameTooltip:AddDoubleLine(
+            'Items contributing to forge power',
+            forgePowerProgress,
+            NORMAL_FONT_COLOR.r,
+            NORMAL_FONT_COLOR.g,
+            NORMAL_FONT_COLOR.b,
+            HIGHLIGHT_FONT_COLOR.r,
+            HIGHLIGHT_FONT_COLOR.g,
+            HIGHLIGHT_FONT_COLOR.b
+        )
+    end
     
     GameTooltip:Show()
 end

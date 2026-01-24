@@ -1,5 +1,5 @@
 ScootsStats = {
-    ['version'] = '2.7.2',
+    ['version'] = '2.8.0',
     ['frames'] = {
         ['event'] = CreateFrame('Frame', 'ScootsStatsEventFrame', UIParent),
         ['master'] = CreateFrame('Frame', 'ScootsStatsMasterFrame', _G['CharacterFrame']),
