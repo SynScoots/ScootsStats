@@ -732,7 +732,7 @@ function ScootsStats.canEquipItem(itemLink, isOffHand)
                         break
                     end
                 elseif(itemSubType == ScootsStats.armourSubTypeMail) then
-                    if(playerClass ~= 'MAGE' and playerClass ~= 'PRIEST' and playerClass ~= 'WARLOCK') then
+                    if(playerClass ~= 'DRUID' and playerClass ~= 'MAGE' and playerClass ~= 'PRIEST' and playerClass ~= 'ROGUE' and playerClass ~= 'WARLOCK') then
                         if(playerLevel >= 40 or (playerClass ~= 'HUNTER' and playerClass ~= 'SHAMAN')) then
                             allowArmourType = true
                             break
