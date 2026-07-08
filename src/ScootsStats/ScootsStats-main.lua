@@ -48,6 +48,7 @@ ScootsStats.init = function()
     ScootsStats.initialised = true
     ScootsStats.loadOptions()
     ScootsStats.baseWidth = _G['CharacterFrame']:GetWidth()
+    ScootsStats.sidePanelWidth = 170
     ScootsStats.strata = _G['CharacterFrame']:GetFrameStrata()
     ScootsStats.slotIds = {1, 2, 3, 15, 5, 9, 10, 6, 7, 8, 11, 12, 13, 14, 16, 17, 18}
     ScootsStats.sectionFrames = {}
@@ -455,38 +456,33 @@ ScootsStats.updateStats = function()
                     ['display'] = ScootsStats.setStatForgePower,
                     ['onEnter'] = ScootsStats.enterForgePower,
                     ['option'] = {'prestige', 'forgepower'},
-                    ['attunementOnly'] = true
                 },
                 {
                     ['display'] = ScootsStats.setStatLootCoercion,
                     ['onEnter'] = ScootsStats.enterLootCoercion,
                     ['option'] = {'prestige', 'lootcoercion'},
-                    ['attunementOnly'] = true
                 },
                 {
                     ['display'] = ScootsStats.setStatAffixCoercion,
                     ['onEnter'] = ScootsStats.enterAffixCoercion,
                     ['option'] = {'prestige', 'affixcoercion'},
-                    ['attunementOnly'] = true
                 },
                 {
                     ['display'] = ScootsStats.setStatBonusExp,
                     ['onEnter'] = ScootsStats.enterBonusExp,
                     ['option'] = {'prestige', 'bonusexp'},
-                    ['attunementOnly'] = true
                 },
                 {
                     ['display'] = ScootsStats.setStatLuckyLoot,
                     ['onEnter'] = ScootsStats.enterLuckyLoot,
                     ['option'] = {'prestige', 'luckyloot'},
-                    ['attunementOnly'] = true
                 }
             }
         }
     }
     
     local prevFrame = nil
-    local minWidth = ScootsStats.frames.title:GetWidth() + ScootsStats.frames.optionsButton:GetWidth() + 10
+    local minWidth = math.max(170, ScootsStats.frames.title:GetWidth() + ScootsStats.frames.optionsButton:GetWidth() + 10)
     local frameHeight = 5
     
     for sectionIndex, section in ipairs(layout) do

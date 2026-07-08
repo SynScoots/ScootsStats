@@ -102,6 +102,8 @@ ScootsStats.frames.options:HookScript('OnShow', function(frame)
         return nil
     end
     
+    InterfaceOptionsFrame:SetWidth(math.max(900, InterfaceOptionsFrame:GetWidth()))
+    
     frame.rendered = true
 
     local title = frame:CreateFontString('ScootsStats-Options-Main-Title', 'OVERLAY', 'GameFontNormalLarge')
